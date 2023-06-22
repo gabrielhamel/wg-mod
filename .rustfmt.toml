@@ -1,0 +1,11 @@
+fn_params_layout = "Compressed"
+max_width = 110
+edition = "2021"
+match_arm_leading_pipes = "Always"
+match_block_trailing_comma = true
+newline_style = "Unix"
+use_try_shorthand = true
+reorder_modules = true
+reorder_imports = true
+remove_nested_parens = true
+merge_derives = true
