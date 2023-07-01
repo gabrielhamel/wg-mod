@@ -1,5 +1,6 @@
 use clap::Command;
 
+mod config;
 mod doctor;
 
 fn root() -> Command {
