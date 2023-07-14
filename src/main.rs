@@ -1,7 +1,8 @@
-use clap::Command;
-
 mod config;
 mod doctor;
+mod new;
+
+use clap::Command;
 
 fn root() -> Command {
     Command::new("wg-mod")
@@ -10,6 +11,7 @@ fn root() -> Command {
         .about("Provides tools for wargaming modding")
         .subcommand_required(true)
         .subcommand(doctor::command())
+        .subcommand(new::command())
 }
 
 fn main() {
@@ -17,6 +19,7 @@ fn main() {
 
     match matches.subcommand() {
         | Some(("doctor", args)) => doctor::execute(args),
+        | Some(("new", args)) => new::execute(args),
         | Some((_, _)) => panic!("Not implemented"),
         | None => panic!("No command provided"),
     }

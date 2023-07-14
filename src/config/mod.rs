@@ -1,9 +1,8 @@
-use config::{Config, File};
-use serde_derive::Deserialize;
+pub mod error;
 
 use self::error::ConfigError;
-
-pub mod error;
+use config::{Config, File};
+use serde_derive::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
