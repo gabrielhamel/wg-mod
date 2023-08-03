@@ -1,7 +1,7 @@
 pub mod error;
 
 use self::error::ConfigError;
-use config::{Config, File};
+use config::Config;
 use serde_derive::Deserialize;
 
 #[derive(Debug, Deserialize)]

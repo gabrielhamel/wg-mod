@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::io;
+use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
 pub enum NewError {
@@ -11,4 +11,10 @@ pub enum NewError {
 
     #[error("Unable to create this directory {0}")]
     UnableToCreateDirectory(io::Error),
+
+    #[error("Cannot build the regex")]
+    InvalidRegex(#[from] regex::Error),
+
+    #[error("Cannot parse arguments")]
+    InvalidPromptRegex(#[from] inquire::InquireError),
 }
