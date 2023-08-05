@@ -1,3 +1,5 @@
+pub mod utils;
+
 mod config;
 mod doctor;
 mod new;

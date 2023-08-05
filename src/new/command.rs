@@ -1,9 +1,7 @@
-use crate::new::NewError;
+use crate::{new::NewError, utils::pattern_validator::PatternValidator};
 use clap::ArgMatches;
 use convert_case::{Case, Casing};
-use inquire::validator::{StringValidator, Validation};
-use regex::Regex;
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct NewModCommand {
@@ -25,31 +23,6 @@ fn parse_path(args: &ArgMatches, mod_name: &String) -> Result<PathBuf, NewError>
     complete_path.push(mod_name.from_case(Case::UpperCamel).to_case(Case::Kebab));
 
     Ok(complete_path)
-}
-
-#[derive(Clone)]
-struct PatternValidator {
-    pattern: Regex,
-    error_message: String,
-}
-
-impl PatternValidator {
-    fn new(pattern: &str, error_message: &str) -> Result<Self, regex::Error> {
-        Ok(PatternValidator {
-            pattern: Regex::from_str(pattern)?,
-            error_message: error_message.into(),
-        })
-    }
-}
-
-impl StringValidator for PatternValidator {
-    fn validate(&self, input: &str) -> Result<Validation, inquire::CustomUserError> {
-        if self.pattern.is_match(input) {
-            Ok(Validation::Valid)
-        } else {
-            Ok(Validation::Invalid(self.error_message.clone().into()))
-        }
-    }
 }
 
 pub fn collect_command(args: &ArgMatches) -> Result<NewModCommand, NewError> {
