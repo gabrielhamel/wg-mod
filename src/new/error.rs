@@ -1,6 +1,8 @@
 use std::io;
 use std::path::PathBuf;
 
+use crate::utils::file_template;
+
 #[derive(thiserror::Error, Debug)]
 pub enum NewError {
     #[error("The provided path is invalid")]
@@ -17,4 +19,7 @@ pub enum NewError {
 
     #[error("Cannot parse arguments")]
     InvalidPromptRegex(#[from] inquire::InquireError),
+
+    #[error("Cannot create templated file")]
+    FileTemplateError(#[from] file_template::FileTemplateError),
 }

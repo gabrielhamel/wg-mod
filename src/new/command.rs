@@ -3,7 +3,7 @@ use clap::ArgMatches;
 use convert_case::{Case, Casing};
 use std::path::PathBuf;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NewModCommand {
     pub name: String,
     pub path: PathBuf,
@@ -20,20 +20,14 @@ fn parse_path(args: &ArgMatches, mod_name: &String) -> Result<PathBuf, NewError>
         return Err(NewError::PathNotExists(complete_path));
     }
 
-    complete_path.push(mod_name.from_case(Case::UpperCamel).to_case(Case::Kebab));
+    complete_path.push(mod_name.from_case(Case::Alternating).to_case(Case::Kebab));
 
     Ok(complete_path)
 }
 
 pub fn collect_command(args: &ArgMatches) -> Result<NewModCommand, NewError> {
-    let name_validator = PatternValidator::new(
-        r"^(?:[A-Z][a-z0-9]+)(?:[A-Z]+[a-z0-9]*)*$",
-        "Your mod name must respect the CamelCase",
-    )?;
-
     let name = inquire::Text::new("Mod name:")
-        .with_placeholder("BetterMatchmaking")
-        .with_validator(name_validator)
+        .with_placeholder("Better Matchmaking")
         .prompt()?;
 
     let version_validator = PatternValidator::new(
@@ -52,12 +46,18 @@ pub fn collect_command(args: &ArgMatches) -> Result<NewModCommand, NewError> {
         .prompt()?;
 
     let package_name_validator = PatternValidator::new(
-        r"^([A-Za-z]{1}[A-Za-z\d_]*\.)+[A-Za-z][A-Za-z\d_]*$",
-        "Your package name must be formated like this <prefix>.<dotted-namespace>.<modname>",
+        r"^([a-z]{1}[a-z-\d_]*\.)+[a-z][a-z-\d_]*$",
+        "Your package name must be formated like this <prefix>.<dotted-namespace>.<mod-name>, only lower case allowed",
     )?;
 
     let package_name = inquire::Text::new("Package name:")
-        .with_default(format!("com.example.{}", name).as_str())
+        .with_default(
+            format!(
+                "com.example.{}",
+                name.from_case(Case::Alternating).to_case(Case::Kebab)
+            )
+            .as_str(),
+        )
         .with_validator(package_name_validator)
         .prompt()?;
 
