@@ -5,12 +5,23 @@
 Features:
 
 - Init mod project
+- Available Windows / Linux / Macos (yes i know)
 
 Comming:
 
 - Auto prepare dev environment
 - Mod builder (python + AS3)
 - WoT debbuger
+
+I will track the development [here](https://github.com/users/gabrielhamel/projects/5)
+
+## Installation
+
+You must have [Cargo / Rust](https://www.rust-lang.org/tools/install) on your machine.
+
+```bash
+cargo install wg-mod
+```
 
 ## Usage
 
