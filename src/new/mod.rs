@@ -4,7 +4,6 @@ mod template;
 use self::{prompt::*, template::create_mod_files};
 use crate::utils::file_template;
 use clap::{ArgMatches, Command};
-use convert_case::{Case, Casing};
 use std::io;
 use std::path::PathBuf;
 
@@ -34,9 +33,7 @@ fn collect_args() -> Result<NewArgs, Error> {
     let version = prompt_version()?;
     let description = prompt_description()?;
     let package_name = prompt_package_name(&name)?;
-
-    let kebab_name = name.from_case(Case::Alternating).to_case(Case::Kebab);
-    let directory = PathBuf::from(".").join(kebab_name);
+    let directory = PathBuf::from(".");
 
     Ok(NewArgs {
         name,
