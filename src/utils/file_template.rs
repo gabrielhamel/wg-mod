@@ -1,27 +1,23 @@
 use handlebars::Handlebars;
 use serde::Serialize;
-use std::{fs::File, path::PathBuf};
+use std::{fs::File, io, path::PathBuf};
 
 #[derive(thiserror::Error, Debug)]
-pub enum FileTemplateError {
-    #[error("Cannot apply template")]
-    RenderError(#[from] handlebars::RenderError),
+pub enum Error {
+    #[error("Error occured during file creation")]
+    FileCreateError(io::Error),
 
-    #[error("Unable to create the file")]
-    UnableToCreateFile(#[from] std::io::Error),
+    #[error("Unable to write in this file")]
+    TemplateWriteError(#[from] handlebars::RenderError),
 }
 
-pub fn create_templated_file<T>(
-    filepath: &PathBuf, template_string: &str, data: &T,
-) -> Result<(), FileTemplateError>
+pub fn write_template<T>(filepath: PathBuf, template: &str, data: &T) -> Result<(), Error>
 where
     T: Serialize,
 {
-    let handlebar = Handlebars::new();
+    let file = File::create(&filepath).map_err(Error::FileCreateError)?;
 
-    let file = File::create(filepath).map_err(FileTemplateError::UnableToCreateFile)?;
-
-    handlebar.render_template_to_write(template_string, data, file)?;
-
-    Ok(())
+    Handlebars::new()
+        .render_template_to_write(template, data, file)
+        .map_err(Error::TemplateWriteError)
 }

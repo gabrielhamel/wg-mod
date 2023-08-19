@@ -1,65 +1,66 @@
-mod command;
-mod error;
+mod prompt;
+mod template;
 
-use self::{command::collect_command, error::NewError};
-use crate::utils::file_template::create_templated_file;
-use clap::{Arg, ArgMatches, Command};
+use self::{prompt::*, template::create_mod_files};
+use crate::utils::file_template;
+use clap::{ArgMatches, Command};
 use convert_case::{Case, Casing};
-use serde_json::json;
-use std::fs::create_dir;
+use std::io;
+use std::path::PathBuf;
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Unable to create directory")]
+    DirectoryCreateError(io::Error),
+
+    #[error("Error occured during prompt")]
+    PromptError(#[from] prompt::Error),
+
+    #[error("Unable to create this template file")]
+    FileTemplateError(#[from] file_template::Error),
+}
+
+#[derive(Debug, Clone)]
+pub struct NewArgs {
+    pub name: String,
+    pub directory: PathBuf,
+    pub version: String,
+    pub description: String,
+    pub package_name: String,
+}
+
+fn collect_args() -> Result<NewArgs, Error> {
+    let name = prompt_name()?;
+    let version = prompt_version()?;
+    let description = prompt_description()?;
+    let package_name = prompt_package_name(&name)?;
+
+    let kebab_name = name.from_case(Case::Alternating).to_case(Case::Kebab);
+    let directory = PathBuf::from(".").join(kebab_name);
+
+    Ok(NewArgs {
+        name,
+        description,
+        package_name,
+        version,
+        directory,
+    })
+}
 
 pub fn command() -> Command {
     Command::new("new")
         .about("Create a new mod project")
-        .long_about("Create a new mod project at <path>")
-        .arg(Arg::new("path").default_value("."))
+        .long_about("Create a directory with all default configs files and mod entrypoints")
 }
 
-pub fn new(args: &ArgMatches) -> Result<(), NewError> {
-    let new_command = collect_command(args)?;
-
-    create_dir(&new_command.path).map_err(NewError::UnableToCreateDirectory)?;
-
-    create_templated_file(
-        &new_command.path.join("meta.xml"),
-        "<root>
-    <id>{{package_name}}</id>
-    <version>{{version}}</version>
-    <name>{{name}}</name>
-    <description>{{description}}</description>
-</root>",
-        &json!({
-            "package_name": new_command.package_name,
-            "version": new_command.version,
-            "name": new_command.name,
-            "description": new_command.description
-        }),
-    )?;
-
-    create_dir(&new_command.path.join("scripts")).map_err(NewError::UnableToCreateDirectory)?;
-
-    create_templated_file(
-        &new_command.path.join(format!(
-            "scripts/mod_{}.py",
-            new_command.name.to_case(Case::Snake)
-        )),
-        "def init():
-    print(\"Hello world from {{name}}\")
-
-def fini():
-    print(\"Good bye world from {{name}}\")
-
-",
-        &json!({
-            "name": new_command.name
-        }),
-    )?;
-
-    Ok(())
-}
-
-pub fn execute(args: &ArgMatches) {
-    if let Err(e) = new(args) {
-        eprintln!("Error {}", e)
+pub fn execute(_: &ArgMatches) {
+    match collect_args() {
+        | Ok(args) => match create_mod_files(args) {
+            | Ok(()) => (),
+            | Err(e) => eprintln!("Command execution error {}", e),
+        },
+        | Err(e) => {
+            eprintln!("Command error {}", e)
+        },
     }
 }
