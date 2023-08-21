@@ -19,7 +19,7 @@ pub enum Error {
     FileTemplateError(#[from] file_template::Error),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct NewArgs {
     pub name: String,
     pub directory: PathBuf,

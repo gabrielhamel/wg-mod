@@ -28,7 +28,7 @@ where
 }
 
 #[test]
-fn mod_files() {
+fn file_template() {
     use tempfile::tempdir;
 
     let tmp_dir = tempdir().unwrap();
