@@ -11,7 +11,6 @@ readme = "README.md"
 categories = ["command-line-utilities"]
 keywords = ["cli", "wot", "WorldOfTanks", "modding"]
 
-
 [dependencies]
 clap = { version = "4.3.8" }
 home = "0.5.5"

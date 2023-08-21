@@ -11,7 +11,7 @@ pub fn create_mod_files(args: NewArgs) -> Result<(), Error> {
     create_dir(&mod_path).map_err(Error::DirectoryCreateError)?;
 
     write_template(
-        mod_path.join("meta.xml"),
+        &mod_path.join("meta.xml"),
         "<root>
     <id>{{package_name}}</id>
     <version>{{version}}</version>
@@ -32,7 +32,7 @@ pub fn create_mod_files(args: NewArgs) -> Result<(), Error> {
     let mod_entrypoint_path = scripts_path.join(format!("mod_{}.py", args.name.to_case(Case::Snake)));
 
     write_template(
-        mod_entrypoint_path,
+        &mod_entrypoint_path,
         "def init():
     print(\"Hello world from {{name}}\")
 

@@ -1,6 +1,11 @@
 use handlebars::Handlebars;
 use serde::Serialize;
-use std::{fs::File, io, path::PathBuf};
+use serde_json::json;
+use std::{
+    fs::File,
+    io::{self, Read},
+    path::PathBuf,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -11,13 +16,40 @@ pub enum Error {
     TemplateWriteError(#[from] handlebars::RenderError),
 }
 
-pub fn write_template<T>(filepath: PathBuf, template: &str, data: &T) -> Result<(), Error>
+pub fn write_template<T>(filepath: &PathBuf, template: &str, data: &T) -> Result<(), Error>
 where
     T: Serialize,
 {
-    let file = File::create(&filepath).map_err(|e| Error::FileCreateError(e, filepath))?;
+    let file = File::create(&filepath).map_err(|e| Error::FileCreateError(e, filepath.clone()))?;
 
     Handlebars::new()
         .render_template_to_write(template, data, file)
         .map_err(Error::TemplateWriteError)
+}
+
+#[test]
+fn mod_files() {
+    use tempfile::tempdir;
+
+    let tmp_dir = tempdir().unwrap();
+    let filepath = tmp_dir.path().join("file.txt");
+
+    write_template(
+        &filepath,
+        "{{one}} {{two}} !",
+        &json!({
+            "one": "Hello",
+            "two": "world"
+        }),
+    )
+    .unwrap();
+
+    let mut file = File::open(&filepath).unwrap();
+    let mut file_content = String::new();
+    let bytes_readed = file.read_to_string(&mut file_content).unwrap();
+
+    assert_eq!(bytes_readed, 13);
+    assert_eq!(file_content, "Hello world !");
+
+    tmp_dir.close().unwrap();
 }

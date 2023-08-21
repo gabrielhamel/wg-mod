@@ -30,3 +30,12 @@ Create a new mod directory
 ```bash
 wg-mod new
 ```
+
+## Development
+
+Run unit-tests in watch mode
+
+```bash
+cargo install cargo-watch
+cargo watch -x test
+```
