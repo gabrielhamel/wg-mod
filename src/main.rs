@@ -13,8 +13,8 @@ fn root() -> Command {
         .subcommand_required(true)
         .subcommand(new::command())
 }
-
-fn main() {
+#[tokio::main]
+async fn main() {
     let matches = root().get_matches();
 
     match matches.subcommand() {
