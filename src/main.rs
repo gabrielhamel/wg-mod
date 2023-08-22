@@ -1,5 +1,6 @@
 mod config;
 mod new;
+mod sdk;
 mod utils;
 
 use clap::Command;
