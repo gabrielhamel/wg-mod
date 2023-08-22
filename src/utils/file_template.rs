@@ -1,11 +1,6 @@
 use handlebars::Handlebars;
 use serde::Serialize;
-use serde_json::json;
-use std::{
-    fs::File,
-    io::{self, Read},
-    path::PathBuf,
-};
+use std::{fs::File, io, path::PathBuf};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -29,6 +24,8 @@ where
 
 #[test]
 fn file_template() {
+    use serde_json::json;
+    use std::io::Read;
     use tempfile::tempdir;
 
     let tmp_dir = tempdir().unwrap();
