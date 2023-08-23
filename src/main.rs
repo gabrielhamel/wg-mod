@@ -15,11 +15,14 @@ fn root() -> Command {
 }
 #[tokio::main]
 async fn main() {
-    let matches = root().get_matches();
+    // let matches = root().get_matches();
 
-    match matches.subcommand() {
-        | Some(("new", args)) => new::execute(args),
-        | Some((_, _)) => panic!("Not implemented"),
-        | None => panic!("No command provided"),
-    }
+    // match matches.subcommand() {
+    //     | Some(("new", args)) => new::execute(args),
+    //     | Some((_, _)) => panic!("Not implemented"),
+    //     | None => panic!("No command provided"),
+    // }
+
+    println!("{}", std::env::consts::OS);
+    println!("{}", std::env::consts::ARCH);
 }
