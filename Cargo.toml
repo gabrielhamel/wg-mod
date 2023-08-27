@@ -28,3 +28,4 @@ indicatif = "0.17.6"
 reqwest = {version = "0.11.19", features = ["stream"]}
 tokio = {version = "1.32.0", features = ["rt", "macros", "rt-multi-thread"]}
 futures-util = "0.3.28"
+spinners = "4.1.0"
