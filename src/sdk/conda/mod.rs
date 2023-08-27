@@ -56,7 +56,13 @@ impl Conda {
     }
 
     fn command(&self, args: Vec<&str>) -> Result<String, Error> {
-        let output = Command::new(self.conda_path.join("bin/conda"))
+        let mut command = if cfg!(target_os = "windows") {
+            Command::new(self.conda_path.join("_conda"))
+        } else {
+            Command::new(self.conda_path.join("bin/conda"))
+        };
+
+        let output = command
             .args(args)
             .output()
             .map_err(Error::CommandInvokationError)?;
@@ -119,17 +125,26 @@ impl Conda {
         println!("");
         let mut sp = Spinner::new(Spinners::Arrow3, "Installing conda...".into());
 
-        // TODO INSTALL WINDOWS
-        Command::new("sh")
-            .args([
-                install_destination.as_str(),
-                "-p",
-                self.conda_path.to_str().ok_or(Error::PathError)?,
-                "-b",
-                "-u",
-            ])
-            .output()
-            .map_err(Error::InstallError)?;
+        if cfg!(target_os = "windows") {
+            Command::new(&install_destination)
+                .args([
+                    "/S",
+                    &format!("/D={}", self.conda_path.to_str().ok_or(Error::PathError)?),
+                ])
+                .output()
+                .map_err(Error::InstallError)?
+        } else {
+            Command::new("sh")
+                .args([
+                    &install_destination,
+                    "-p",
+                    self.conda_path.to_str().ok_or(Error::PathError)?,
+                    "-b",
+                    "-u",
+                ])
+                .output()
+                .map_err(Error::InstallError)?
+        };
 
         sp.stop_with_newline();
 
