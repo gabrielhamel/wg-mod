@@ -4,6 +4,7 @@ mod sdk;
 mod utils;
 
 use clap::Command;
+use sdk::conda::Conda;
 
 fn root() -> Command {
     Command::new("wg-mod")
@@ -23,6 +24,10 @@ async fn main() {
     //     | None => panic!("No command provided"),
     // }
 
-    println!("{}", std::env::consts::OS);
-    println!("{}", std::env::consts::ARCH);
+    let conda = Conda::default().unwrap();
+    conda.install().await.unwrap();
+
+    let version = conda.version().expect("");
+
+    println!("version: {}", version);
 }
