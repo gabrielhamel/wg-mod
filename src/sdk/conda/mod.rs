@@ -30,6 +30,9 @@ pub enum Error {
     #[error("Cannot create a download directory")]
     PathError,
 
+    #[error("Conda isn't installed")]
+    NotInstalledError,
+
     #[error("Conda install error")]
     InstallError(std::io::Error),
 
@@ -56,6 +59,10 @@ impl Conda {
     }
 
     fn command(&self, args: Vec<&str>) -> Result<String, Error> {
+        if !self.is_installed()? {
+            return Err(Error::NotInstalledError);
+        }
+
         let mut command = if cfg!(target_os = "windows") {
             Command::new(self.conda_path.join("_conda"))
         } else {
@@ -76,9 +83,16 @@ impl Conda {
     }
 
     pub fn is_installed(&self) -> Result<bool, Error> {
-        let version = self.version();
+        let path = if cfg!(target_os = "windows") {
+            "_conda.exe"
+        } else {
+            "bin/conda"
+        };
 
-        Ok(version.is_ok())
+        match fs::metadata(self.conda_path.join(path)) {
+            | Ok(metadata) => Ok(metadata.is_file()),
+            | Err(_) => Ok(false),
+        }
     }
 
     pub fn version(&self) -> Result<String, Error> {
@@ -86,6 +100,20 @@ impl Conda {
         out = out.trim().to_string();
         out = out.replace("conda ", "");
         Ok(out)
+    }
+
+    pub fn create_env(&self, name: &str, python_version: &str) -> Result<(), Error> {
+        self.command(vec![
+            "create",
+            "-p",
+            self.conda_path
+                .join("envs")
+                .join(name)
+                .to_str()
+                .ok_or(Error::PathError)?,
+            &format!("python={}", python_version),
+        ])
+        .and(Ok(()))
     }
 
     pub async fn install(&self) -> Result<(), Error> {
