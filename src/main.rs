@@ -25,9 +25,6 @@ async fn main() {
     // }
 
     let conda = Conda::default().unwrap();
-    conda.install().await.unwrap();
 
-    let version = conda.version().expect("");
-
-    println!("version: {}", version);
+    conda.create_env("wg-mod-py2", "2").unwrap();
 }
