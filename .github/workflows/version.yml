@@ -1,0 +1,35 @@
+name: Version
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'Cargo.toml'
+      - 'CHANGELOG.md'
+
+jobs:
+  bump_version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.github_token }}
+
+      - name: Bump package version
+        uses: TriPSs/conventional-changelog-action@v3
+        with:
+          github-token: ${{ secrets.github_token }}
+          tag-prefix: 'v'
+          skip-ci: false
+          skip-on-empty: false
+          version-file: 'Cargo.toml'
+          version-path: 'package.version'
+          release-count: 0
+
+          # Commit details
+          git-message: 'chore(release): {version}'
+          git-user-name: 'gabrielhamel'
+          git-user-email: 'gabriel.hamel.pro@gmail.com'
