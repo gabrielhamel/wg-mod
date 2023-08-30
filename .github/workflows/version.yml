@@ -19,13 +19,13 @@ jobs:
           token: ${{ secrets.github_token }}
 
       - name: Bump package version
-        uses: TriPSs/conventional-changelog-action@v3
+        uses: TriPSs/conventional-changelog-action@v4
         with:
           github-token: ${{ secrets.github_token }}
           tag-prefix: 'v'
           skip-ci: false
           skip-on-empty: false
-          version-file: 'Cargo.toml'
+          version-file: './Cargo.toml'
           version-path: 'package.version'
           release-count: 0
 
