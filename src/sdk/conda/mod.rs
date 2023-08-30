@@ -7,15 +7,6 @@ use std::{
     str::Utf8Error,
 };
 
-pub async fn download() {
-    download_file(
-        "https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh",
-        "Miniconda3-latest-MacOSX-arm64.sh",
-    )
-    .await
-    .unwrap();
-}
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Can't access to configs")]

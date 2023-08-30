@@ -4,7 +4,6 @@ mod sdk;
 mod utils;
 
 use clap::Command;
-use sdk::conda::Conda;
 
 fn root() -> Command {
     Command::new("wg-mod")
@@ -16,15 +15,11 @@ fn root() -> Command {
 }
 #[tokio::main]
 async fn main() {
-    // let matches = root().get_matches();
+    let matches = root().get_matches();
 
-    // match matches.subcommand() {
-    //     | Some(("new", args)) => new::execute(args),
-    //     | Some((_, _)) => panic!("Not implemented"),
-    //     | None => panic!("No command provided"),
-    // }
-
-    let conda = Conda::default().unwrap();
-
-    conda.create_env("wg-mod-py2", "2").unwrap();
+    match matches.subcommand() {
+        | Some(("new", args)) => new::execute(args),
+        | Some((_, _)) => panic!("Not implemented"),
+        | None => panic!("No command provided"),
+    }
 }
