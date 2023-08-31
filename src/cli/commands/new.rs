@@ -1,5 +1,13 @@
-use crate::utils::pattern_validator::PatternValidator;
+use crate::{
+    cli::errors::Error as CommandError,
+    new::{template::create_mod_files, NewArgs},
+    utils::pattern_validator::PatternValidator,
+};
+use clap::{ArgMatches, Command};
 use convert_case::{Case, Casing};
+use std::path::PathBuf;
+
+use super::super::command::RunnableCommand;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -12,7 +20,7 @@ pub enum Error {
 
 type PromptResult<T> = Result<T, Error>;
 
-pub fn prompt_version() -> PromptResult<String> {
+fn prompt_version() -> PromptResult<String> {
     let validator = PatternValidator::new(
         r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$",
         "Your mod version must respect the semantic versioning",
@@ -26,7 +34,7 @@ pub fn prompt_version() -> PromptResult<String> {
     Ok(value)
 }
 
-pub fn prompt_name() -> PromptResult<String> {
+fn prompt_name() -> PromptResult<String> {
     let value = inquire::Text::new("Mod name:")
         .with_placeholder("Better Matchmaking")
         .prompt()?;
@@ -34,7 +42,7 @@ pub fn prompt_name() -> PromptResult<String> {
     Ok(value)
 }
 
-pub fn prompt_description() -> PromptResult<String> {
+fn prompt_description() -> PromptResult<String> {
     let value = inquire::Text::new("Description:")
         .with_placeholder("My first mod ! Hello world")
         .with_initial_value("")
@@ -43,7 +51,7 @@ pub fn prompt_description() -> PromptResult<String> {
     Ok(value)
 }
 
-pub fn prompt_package_name(name: &String) -> PromptResult<String> {
+fn prompt_package_name(name: &String) -> PromptResult<String> {
     let validator = PatternValidator::new(
         r"^([a-z]{1}[a-z-\d_]*\.)+[a-z][a-z-\d_]*$",
         "Your package name must be formated like this <prefix>.<dotted-namespace>.<mod-name>, only lower case allowed",
@@ -61,4 +69,40 @@ pub fn prompt_package_name(name: &String) -> PromptResult<String> {
         .prompt()?;
 
     Ok(value)
+}
+
+fn collect_args() -> Result<NewArgs, Error> {
+    let name = prompt_name()?;
+    let version = prompt_version()?;
+    let description = prompt_description()?;
+    let package_name = prompt_package_name(&name)?;
+    let directory = PathBuf::from(".");
+
+    Ok(NewArgs {
+        name,
+        description,
+        package_name,
+        version,
+        directory,
+    })
+}
+
+pub struct NewCommand;
+
+impl RunnableCommand for NewCommand {
+    fn command() -> Command {
+        Command::new("new")
+            .about("Create a new mod project")
+            .long_about("Create a directory with all default configs files and mod entrypoints")
+    }
+
+    fn run(_: &ArgMatches) -> Result<(), CommandError> {
+        match collect_args() {
+            | Ok(args) => match create_mod_files(args) {
+                | Ok(()) => Ok(()),
+                | Err(e) => Err(CommandError::CommandExecutionError),
+            },
+            | Err(e) => Err(CommandError::CommandExecutionError),
+        }
+    }
 }
