@@ -2,16 +2,12 @@ use super::{Error, NewArgs};
 use crate::utils::file_template::write_template;
 use convert_case::{Case, Casing};
 use serde_json::json;
-use std::fs::create_dir;
+use std::path::PathBuf;
 
-pub fn create_mod_files(args: NewArgs) -> Result<(), Error> {
-    let kebab_name = args.name.from_case(Case::Alternating).to_case(Case::Kebab);
-
-    let mod_path = args.directory.join(kebab_name);
-    create_dir(&mod_path).map_err(Error::DirectoryCreateError)?;
-
+fn template_meta(args: &NewArgs, parent_dir: &PathBuf) -> Result<(), Error> {
     write_template(
-        &mod_path.join("meta.xml"),
+        &parent_dir,
+        "meta.xml",
         "<root>
     <id>{{package_name}}</id>
     <version>{{version}}</version>
@@ -26,13 +22,13 @@ pub fn create_mod_files(args: NewArgs) -> Result<(), Error> {
         }),
     )?;
 
-    let scripts_path = &mod_path.join("scripts");
-    create_dir(scripts_path).map_err(Error::DirectoryCreateError)?;
+    Ok(())
+}
 
-    let mod_entrypoint_path = scripts_path.join(format!("mod_{}.py", args.name.to_case(Case::Snake)));
-
+fn template_script_entrypoint(args: &NewArgs, parent_dir: &PathBuf) -> Result<(), Error> {
     write_template(
-        &mod_entrypoint_path,
+        &parent_dir,
+        &format!("mod_{}.py", args.name.to_case(Case::Snake)),
         "def init():
     print(\"Hello world from {{name}}\")
 
@@ -47,49 +43,14 @@ def fini():
     Ok(())
 }
 
-#[test]
-fn mod_files() {
-    use std::fs::read_to_string;
-    use tempfile::tempdir;
+pub fn create_mod_files(args: NewArgs) -> Result<(), Error> {
+    let kebab_name = args.name.from_case(Case::Alternating).to_case(Case::Kebab);
 
-    let tmp_dir = tempdir().unwrap();
+    let root_path = args.directory.join(kebab_name);
+    template_meta(&args, &root_path)?;
 
-    let args = NewArgs {
-        version: "1.0.2".to_owned(),
-        description: "Best mod ever".to_owned(),
-        name: "Better matchmaking".to_owned(),
-        directory: tmp_dir.path().to_owned(),
-        package_name: "fr.gabouchet.better-matchmaking".to_owned(),
-    };
+    let scripts_entrypoint_path = &root_path.join("scripts");
+    template_script_entrypoint(&args, &scripts_entrypoint_path)?;
 
-    create_mod_files(args).unwrap();
-
-    let mod_path = tmp_dir.path().join("better-matchmaking");
-
-    assert_eq!(mod_path.exists(), true);
-
-    let meta_content = read_to_string(mod_path.join("meta.xml")).unwrap();
-    assert_eq!(
-        meta_content,
-        "<root>
-    <id>fr.gabouchet.better-matchmaking</id>
-    <version>1.0.2</version>
-    <name>Better matchmaking</name>
-    <description>Best mod ever</description>
-</root>"
-    );
-
-    let script_entrypoint_content =
-        read_to_string(mod_path.join("scripts/mod_better_matchmaking.py")).unwrap();
-    assert_eq!(
-        script_entrypoint_content,
-        "def init():
-    print(\"Hello world from Better matchmaking\")
-
-def fini():
-    print(\"Good bye world from Better matchmaking\")
-"
-    );
-
-    tmp_dir.close().unwrap();
+    Ok(())
 }

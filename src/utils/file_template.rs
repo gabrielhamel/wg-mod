@@ -1,6 +1,10 @@
 use handlebars::Handlebars;
 use serde::Serialize;
-use std::{fs::File, io, path::PathBuf};
+use std::{
+    fs::{self, File},
+    io,
+    path::PathBuf,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -9,13 +13,19 @@ pub enum Error {
 
     #[error("Unable to write in this file")]
     TemplateWriteError(#[from] handlebars::RenderError),
+
+    #[error("Unable to create directory")]
+    DirectoryCreateError(io::Error),
 }
 
-pub fn write_template<T>(filepath: &PathBuf, template: &str, data: &T) -> Result<(), Error>
+pub fn write_template<T>(dir: &PathBuf, filename: &str, template: &str, data: &T) -> Result<(), Error>
 where
     T: Serialize,
 {
-    let file = File::create(&filepath).map_err(|e| Error::FileCreateError(e, filepath.clone()))?;
+    fs::create_dir_all(&dir).map_err(Error::DirectoryCreateError)?;
+
+    let filepath = dir.join(filename);
+    let file = File::create(&filepath).map_err(|e| Error::FileCreateError(e, filepath))?;
 
     Handlebars::new()
         .render_template_to_write(template, data, file)
@@ -32,7 +42,8 @@ fn file_template() {
     let filepath = tmp_dir.path().join("file.txt");
 
     write_template(
-        &filepath,
+        &tmp_dir.path().to_path_buf(),
+        "file.txt",
         "{{one}} {{two}} !",
         &json!({
             "one": "Hello",
