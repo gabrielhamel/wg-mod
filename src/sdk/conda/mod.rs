@@ -1,5 +1,7 @@
-use crate::{config::Configs, utils::downloader::download_file};
-use spinners::{Spinner, Spinners};
+mod install;
+
+use crate::config::Configs;
+use crate::sdk::conda::install::install_conda;
 use std::{
     fs,
     path::PathBuf,
@@ -107,66 +109,11 @@ impl Conda {
         .and(Ok(()))
     }
 
-    pub async fn install(&self) -> Result<(), Error> {
+    pub async fn install_if_not_installed(&self) -> Result<(), Error> {
         if self.is_installed()? {
-            println!("Conda is already installed ({})", self.version()?);
-            return Ok(());
-        }
-
-        let arch = match (std::env::consts::OS, std::env::consts::ARCH) {
-            | ("macos", "aarch64") => ("MacOSX", "arm64", "sh"),
-            | ("macos", arch) => ("MacOSX", arch, "sh"),
-            | ("windows", arch) => ("Windows", arch, "exe"),
-            | (os, arch) => (os, arch, "sh"),
-        };
-
-        fs::create_dir_all(&self.conda_path).map_err(Error::CreateCondaDirectory)?;
-
-        let install_destination = self
-            .conda_path
-            .parent()
-            .ok_or(Error::PathError)?
-            .join(PathBuf::from(format!("install-conda.{}", arch.2)))
-            .to_str()
-            .ok_or(Error::PathError)?
-            .to_string();
-
-        download_file(
-            format!(
-                "https://repo.anaconda.com/miniconda/Miniconda3-latest-{}-{}.{}",
-                arch.0, arch.1, arch.2
-            )
-            .as_str(),
-            install_destination.as_str(),
-        )
-        .await?;
-
-        println!("");
-        let mut sp = Spinner::new(Spinners::Arrow3, "Installing conda...".into());
-
-        if cfg!(target_os = "windows") {
-            Command::new(&install_destination)
-                .args([
-                    "/S",
-                    &format!("/D={}", self.conda_path.to_str().ok_or(Error::PathError)?),
-                ])
-                .output()
-                .map_err(Error::InstallError)?
+            Ok(())
         } else {
-            Command::new("sh")
-                .args([
-                    &install_destination,
-                    "-p",
-                    self.conda_path.to_str().ok_or(Error::PathError)?,
-                    "-b",
-                    "-u",
-                ])
-                .output()
-                .map_err(Error::InstallError)?
-        };
-
-        sp.stop_with_newline();
-
-        Ok(())
+            install_conda(&self.conda_path).await
+        }
     }
 }
