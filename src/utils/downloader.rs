@@ -43,5 +43,7 @@ pub async fn download_file(url: &str, path: &str) -> Result<(), Error> {
     }
 
     pb.finish_with_message(format!("Downloaded {}", url));
+    println!();
+
     Ok(())
 }
