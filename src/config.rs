@@ -13,7 +13,8 @@ pub struct Configs {
 }
 
 fn get_tool_home() -> Result<PathBuf, Error> {
-    let user_path: std::path::PathBuf = home::home_dir().ok_or(Error::UserHomeError)?;
+    let user_path: std::path::PathBuf =
+        home::home_dir().ok_or(Error::UserHomeError)?;
     let wg_tool_path = user_path.join(".wg-mod");
     Ok(wg_tool_path)
 }

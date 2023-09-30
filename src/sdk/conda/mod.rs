@@ -2,7 +2,7 @@ mod install;
 
 use crate::config::Configs;
 use crate::sdk::conda::install::install_conda;
-use crate::utils::task_progress::TaskProgressionSpinner;
+use crate::utils::task_progress::{TaskProgressionBar, TaskProgressionSpinner};
 use std::{
     fs,
     path::PathBuf,
@@ -96,7 +96,9 @@ impl Conda {
         Ok(out)
     }
 
-    pub fn create_env(&self, name: &str, python_version: &str) -> Result<(), Error> {
+    pub fn create_env(
+        &self, name: &str, python_version: &str,
+    ) -> Result<(), Error> {
         self.command(vec![
             "create",
             "-p",
@@ -114,8 +116,17 @@ impl Conda {
         if self.is_installed()? {
             Ok(())
         } else {
-            let task_progression = TaskProgressionSpinner::new("Installing conda...");
-            install_conda(&self.conda_path, task_progression).await
+            let download_progression =
+                TaskProgressionBar::new("Downloading conda");
+            let install_progression =
+                TaskProgressionSpinner::new("Installing conda...");
+
+            install_conda(
+                &self.conda_path,
+                download_progression,
+                install_progression,
+            )
+            .await
         }
     }
 }
