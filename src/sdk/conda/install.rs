@@ -1,11 +1,13 @@
 use crate::sdk::conda::Error;
 use crate::utils::downloader::download_file;
-use spinners::{Spinner, Spinners};
+use crate::utils::task_progress::TaskProgression;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::{Command, Output};
 
-pub async fn install_conda(destination: &PathBuf) -> Result<(), Error> {
+pub async fn install_conda<T: TaskProgression>(
+    destination: &PathBuf, mut task_progression: T,
+) -> Result<(), Error> {
     create_dir_all(destination).map_err(Error::CreateCondaDirectory)?;
 
     let install_script_name = get_install_script_name();
@@ -17,7 +19,7 @@ pub async fn install_conda(destination: &PathBuf) -> Result<(), Error> {
     )
     .await?;
 
-    let mut sp = Spinner::new(Spinners::Arrow3, "Installing conda...".into());
+    task_progression.start();
 
     let install_destination = destination.to_str().ok_or(Error::PathError)?;
     if cfg!(target_os = "windows") {
@@ -26,7 +28,7 @@ pub async fn install_conda(destination: &PathBuf) -> Result<(), Error> {
         install_on_linux_and_macos(&install_script_destination, install_destination)?
     };
 
-    sp.stop_with_newline();
+    task_progression.end();
 
     Ok(())
 }

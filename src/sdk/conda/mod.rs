@@ -2,6 +2,7 @@ mod install;
 
 use crate::config::Configs;
 use crate::sdk::conda::install::install_conda;
+use crate::utils::task_progress::TaskProgressionSpinner;
 use std::{
     fs,
     path::PathBuf,
@@ -113,7 +114,8 @@ impl Conda {
         if self.is_installed()? {
             Ok(())
         } else {
-            install_conda(&self.conda_path).await
+            let task_progression = TaskProgressionSpinner::new("Installing conda...");
+            install_conda(&self.conda_path, task_progression).await
         }
     }
 }
