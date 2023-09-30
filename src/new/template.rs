@@ -25,7 +25,9 @@ fn template_meta(args: &NewArgs, parent_dir: &PathBuf) -> Result<(), Error> {
     Ok(())
 }
 
-fn template_script_entrypoint(args: &NewArgs, parent_dir: &PathBuf) -> Result<(), Error> {
+fn template_script_entrypoint(
+    args: &NewArgs, parent_dir: &PathBuf,
+) -> Result<(), Error> {
     write_template(
         &parent_dir,
         &format!("mod_{}.py", args.name.to_case(Case::Snake)),
@@ -44,7 +46,8 @@ def fini():
 }
 
 pub fn create_mod_files(args: NewArgs) -> Result<(), Error> {
-    let kebab_name = args.name.from_case(Case::Alternating).to_case(Case::Kebab);
+    let kebab_name =
+        args.name.from_case(Case::Alternating).to_case(Case::Kebab);
 
     let root_path = args.directory.join(kebab_name);
     template_meta(&args, &root_path)?;

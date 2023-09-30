@@ -1,6 +1,5 @@
+use crate::utils::task_progress::TaskProgression;
 use futures_util::StreamExt;
-use indicatif::{ProgressBar, ProgressStyle};
-use std::cmp::min;
 use std::fs::File;
 use std::io::Write;
 
@@ -19,31 +18,29 @@ pub enum Error {
     FileWriteError(#[from] std::io::Error),
 }
 
-// https://gist.github.com/giuliano-oliveira/4d11d6b3bb003dba3a1b53f43d81b30d
-pub async fn download_file(url: &str, path: &str) -> Result<(), Error> {
-    let res = reqwest::get(url).await?;
-    let total_size = res.content_length().ok_or(Error::ContentLengthError)?;
-
-    let pb = ProgressBar::new(total_size);
-    pb.set_style(ProgressStyle::default_bar()
-        .template("{msg}\n{spinner:.green} [{elapsed_precise}] [{wide_bar:.green/green}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")?
-        .progress_chars("█▒▒"));
-    pb.set_message(format!("Downloading {}", url));
-
+pub async fn download_file<T: TaskProgression>(
+    url: &str, path: &str, mut task_progression: T,
+) -> Result<(), Error> {
+    let http_response = reqwest::get(url).await?;
+    let total_bytes_to_download = http_response
+        .content_length()
+        .ok_or(Error::ContentLengthError)?;
     let mut file = File::create(path)?;
-    let mut downloaded: u64 = 0;
-    let mut stream = res.bytes_stream();
+    let mut bytes_downloaded: u64 = 0;
+    let mut stream = http_response.bytes_stream();
+
+    task_progression.start();
 
     while let Some(item) = stream.next().await {
         let chunk = item?;
         file.write_all(&chunk)?;
-        let new = min(downloaded + (chunk.len() as u64), total_size);
-        downloaded = new;
-        pb.set_position(new);
+
+        bytes_downloaded += chunk.len() as u64;
+        task_progression
+            .progress(bytes_downloaded as f32 / total_bytes_to_download as f32);
     }
 
-    pb.finish_with_message(format!("Downloaded {}", url));
-    println!();
+    task_progression.end();
 
     Ok(())
 }

@@ -32,7 +32,8 @@ fn mod_files() {
     );
 
     let script_entrypoint_content =
-        read_to_string(mod_path.join("scripts/mod_better_matchmaking.py")).unwrap();
+        read_to_string(mod_path.join("scripts/mod_better_matchmaking.py"))
+            .unwrap();
     assert_eq!(
         script_entrypoint_content,
         "def init():

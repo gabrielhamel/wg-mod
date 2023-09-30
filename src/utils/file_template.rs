@@ -18,14 +18,17 @@ pub enum Error {
     DirectoryCreateError(io::Error),
 }
 
-pub fn write_template<T>(dir: &PathBuf, filename: &str, template: &str, data: &T) -> Result<(), Error>
+pub fn write_template<T>(
+    dir: &PathBuf, filename: &str, template: &str, data: &T,
+) -> Result<(), Error>
 where
     T: Serialize,
 {
     fs::create_dir_all(&dir).map_err(Error::DirectoryCreateError)?;
 
     let filepath = dir.join(filename);
-    let file = File::create(&filepath).map_err(|e| Error::FileCreateError(e, filepath))?;
+    let file = File::create(&filepath)
+        .map_err(|e| Error::FileCreateError(e, filepath))?;
 
     Handlebars::new()
         .render_template_to_write(template, data, file)
