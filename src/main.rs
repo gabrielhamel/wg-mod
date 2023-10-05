@@ -17,6 +17,8 @@ async fn main() {
         conda.install().await.expect("");
     }
 
+    let env = conda.create_environment("wg-mod", "2").expect("");
+
     match cli::run() {
         | Err(err) => eprintln!("{:?}", err),
         | _ => (),

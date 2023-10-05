@@ -1,5 +1,7 @@
+mod environment;
 mod install;
 
+use crate::sdk::conda::environment::Environment;
 use crate::sdk::conda::install::install_conda;
 use std::{
     fs,
@@ -97,9 +99,9 @@ impl Conda {
         Ok(out)
     }
 
-    pub fn create_env(
+    pub fn create_environment(
         &self, name: &str, python_version: &str,
-    ) -> Result<(), Error> {
+    ) -> Result<Environment, Error> {
         self.command(vec![
             "create",
             "-p",
@@ -109,8 +111,14 @@ impl Conda {
                 .to_str()
                 .ok_or(Error::PathError)?,
             &format!("python={}", python_version),
-        ])
-        .and(Ok(()))
+        ])?;
+
+        let environment = self.get_environment(name);
+        Ok(environment)
+    }
+
+    pub fn get_environment(&self, name: &str) -> Environment {
+        Environment {}
     }
 
     pub async fn install(&self) -> Result<(), Error> {
