@@ -64,7 +64,7 @@ impl Conda {
         self.conda_path.join(executable_name)
     }
 
-    fn command(&self, args: Vec<&str>) -> Result<String, Error> {
+    fn command(&self, args: Vec<&str>) -> Result<(String, String), Error> {
         if !self.is_installed()? {
             return Err(Error::NotInstalledError);
         }
@@ -82,7 +82,8 @@ impl Conda {
         }
 
         let stdout = std::str::from_utf8(&output.stdout)?.to_string();
-        Ok(stdout)
+        let stderr = std::str::from_utf8(&output.stderr)?.to_string();
+        Ok((stdout, stderr))
     }
 
     pub fn is_installed(&self) -> Result<bool, Error> {
@@ -93,7 +94,7 @@ impl Conda {
     }
 
     pub fn version(&self) -> Result<String, Error> {
-        let mut out = self.command(vec!["--version"])?;
+        let (mut out, _) = self.command(vec!["--version"])?;
         out = out.trim().to_string();
         out = out.replace("conda ", "");
         Ok(out)
@@ -101,7 +102,7 @@ impl Conda {
 
     pub fn create_environment(
         &self, name: &str, python_version: &str,
-    ) -> Result<Environment, Error> {
+    ) -> Result<(), Error> {
         self.command(vec![
             "create",
             "-p",
@@ -113,12 +114,21 @@ impl Conda {
             &format!("python={}", python_version),
         ])?;
 
-        let environment = self.get_environment(name);
-        Ok(environment)
+        Ok(())
     }
 
     pub fn get_environment(&self, name: &str) -> Environment {
-        Environment {}
+        let conda_envs_path = self.conda_path.join("envs");
+        let environment_path = conda_envs_path.join(name);
+
+        Environment::from(environment_path)
+    }
+
+    pub fn has_environment(&self, name: &str) -> bool {
+        let conda_envs_path = self.conda_path.join("envs");
+        let environment_path = conda_envs_path.join(name);
+
+        environment_path.exists()
     }
 
     pub async fn install(&self) -> Result<(), Error> {

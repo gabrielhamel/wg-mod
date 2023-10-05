@@ -34,7 +34,9 @@ fn get_install_script_name() -> String {
 
     let (os, arch, extension) =
         match (std::env::consts::OS, std::env::consts::ARCH) {
-            | ("macos", "aarch64") => ("MacOSX", enforce_x86_arch_on_macos, "sh"),
+            | ("macos", "aarch64") => {
+                ("MacOSX", enforce_x86_arch_on_macos, "sh")
+            },
             | ("macos", arch) => ("MacOSX", arch, "sh"),
             | ("windows", arch) => ("Windows", arch, "exe"),
             | (os, arch) => (os, arch, "sh"),
