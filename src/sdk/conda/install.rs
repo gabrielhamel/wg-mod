@@ -1,13 +1,10 @@
 use crate::sdk::conda::Error;
 use crate::utils::downloader::download_file;
-use crate::utils::task_progress::TaskProgression;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::{Command, Output};
 
-pub async fn install_conda<T: TaskProgression, U: TaskProgression>(
-    destination: &PathBuf, download_progression: T, mut install_progression: U,
-) -> Result<(), Error> {
+pub async fn install_conda(destination: &PathBuf) -> Result<(), Error> {
     create_dir_all(destination).map_err(Error::CreateCondaDirectory)?;
 
     let install_script_name = get_install_script_name();
@@ -17,14 +14,7 @@ pub async fn install_conda<T: TaskProgression, U: TaskProgression>(
     let url =
         format!("https://repo.anaconda.com/miniconda/{install_script_name}");
 
-    download_file(
-        &url,
-        install_script_destination.as_str(),
-        download_progression,
-    )
-    .await?;
-
-    install_progression.start();
+    download_file(&url, install_script_destination.as_str()).await?;
 
     let install_destination = destination.to_str().ok_or(Error::PathError)?;
     if cfg!(target_os = "windows") {
@@ -35,8 +25,6 @@ pub async fn install_conda<T: TaskProgression, U: TaskProgression>(
             install_destination,
         )?
     };
-
-    install_progression.end();
 
     Ok(())
 }

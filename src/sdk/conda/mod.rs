@@ -1,8 +1,6 @@
 mod install;
 
-use crate::config::Configs;
 use crate::sdk::conda::install::install_conda;
-use crate::utils::task_progress::{TaskProgressionBar, TaskProgressionSpinner};
 use std::{
     fs,
     path::PathBuf,
@@ -27,6 +25,9 @@ pub enum Error {
     #[error("Conda isn't installed")]
     NotInstalledError,
 
+    #[error("Conda is already installed")]
+    CondaAlreadyInstalled,
+
     #[error("Conda install error")]
     InstallError(std::io::Error),
 
@@ -44,12 +45,19 @@ pub struct Conda {
     conda_path: PathBuf,
 }
 
-impl Conda {
-    pub fn default() -> Result<Self, Error> {
-        let config = Configs::load()?;
-        let conda_path = config.wg_mod_home.join("conda");
+impl From<PathBuf> for Conda {
+    fn from(path: PathBuf) -> Self {
+        Self { conda_path: path }
+    }
+}
 
-        Ok(Self { conda_path })
+impl Conda {
+    fn get_executable_name(&self) -> &'static str {
+        if cfg!(target_os = "windows") {
+            "_conda"
+        } else {
+            "bin/conda"
+        }
     }
 
     fn command(&self, args: Vec<&str>) -> Result<String, Error> {
@@ -57,11 +65,8 @@ impl Conda {
             return Err(Error::NotInstalledError);
         }
 
-        let mut command = if cfg!(target_os = "windows") {
-            Command::new(self.conda_path.join("_conda"))
-        } else {
-            Command::new(self.conda_path.join("bin/conda"))
-        };
+        let executable_path = self.conda_path.join(self.get_executable_name());
+        let mut command = Command::new(executable_path);
 
         let output = command
             .args(args)
@@ -112,21 +117,11 @@ impl Conda {
         .and(Ok(()))
     }
 
-    pub async fn install_if_not_installed(&self) -> Result<(), Error> {
+    pub async fn install(&self) -> Result<(), Error> {
         if self.is_installed()? {
-            Ok(())
+            Err(Error::CondaAlreadyInstalled)
         } else {
-            let download_progression =
-                TaskProgressionBar::new("Downloading conda");
-            let install_progression =
-                TaskProgressionSpinner::new("Installing conda...");
-
-            install_conda(
-                &self.conda_path,
-                download_progression,
-                install_progression,
-            )
-            .await
+            install_conda(&self.conda_path).await
         }
     }
 }

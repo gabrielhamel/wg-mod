@@ -100,9 +100,9 @@ impl RunnableCommand for NewCommand {
         match collect_args() {
             | Ok(args) => match create_mod_files(args) {
                 | Ok(()) => Ok(()),
-                | Err(e) => Err(CommandError::CommandExecutionError),
+                | Err(_) => Err(CommandError::CommandExecutionError),
             },
-            | Err(e) => Err(CommandError::CommandExecutionError),
+            | Err(_) => Err(CommandError::CommandExecutionError),
         }
     }
 }
