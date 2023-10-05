@@ -52,12 +52,14 @@ impl From<PathBuf> for Conda {
 }
 
 impl Conda {
-    fn get_executable_name(&self) -> &'static str {
-        if cfg!(target_os = "windows") {
+    fn get_executable_path(&self) -> PathBuf {
+        let executable_name = if cfg!(target_os = "windows") {
             "_conda"
         } else {
             "bin/conda"
-        }
+        };
+
+        self.conda_path.join(executable_name)
     }
 
     fn command(&self, args: Vec<&str>) -> Result<String, Error> {
@@ -65,7 +67,7 @@ impl Conda {
             return Err(Error::NotInstalledError);
         }
 
-        let executable_path = self.conda_path.join(self.get_executable_name());
+        let executable_path = self.get_executable_path();
         let mut command = Command::new(executable_path);
 
         let output = command
@@ -82,13 +84,7 @@ impl Conda {
     }
 
     pub fn is_installed(&self) -> Result<bool, Error> {
-        let path = if cfg!(target_os = "windows") {
-            "_conda.exe"
-        } else {
-            "bin/conda"
-        };
-
-        match fs::metadata(self.conda_path.join(path)) {
+        match fs::metadata(self.get_executable_path()) {
             | Ok(metadata) => Ok(metadata.is_file()),
             | Err(_) => Ok(false),
         }
