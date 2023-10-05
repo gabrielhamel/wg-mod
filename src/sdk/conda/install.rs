@@ -30,9 +30,11 @@ pub async fn install_conda(destination: &PathBuf) -> Result<(), Error> {
 }
 
 fn get_install_script_name() -> String {
+    let enforce_x86_arch_on_macos = "x86_64";
+
     let (os, arch, extension) =
         match (std::env::consts::OS, std::env::consts::ARCH) {
-            | ("macos", "aarch64") => ("MacOSX", "arm64", "sh"),
+            | ("macos", "aarch64") => ("MacOSX", enforce_x86_arch_on_macos, "sh"),
             | ("macos", arch) => ("MacOSX", arch, "sh"),
             | ("windows", arch) => ("Windows", arch, "exe"),
             | (os, arch) => (os, arch, "sh"),
