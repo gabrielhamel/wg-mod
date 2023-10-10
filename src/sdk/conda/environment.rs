@@ -14,11 +14,11 @@ pub enum Error {
     CommandOutputParsingError(#[from] Utf8Error),
 }
 
-pub struct Environment {
+pub struct PythonEnvironment {
     environment_path: PathBuf,
 }
 
-impl From<PathBuf> for Environment {
+impl From<PathBuf> for PythonEnvironment {
     fn from(path: PathBuf) -> Self {
         Self {
             environment_path: path,
@@ -26,20 +26,22 @@ impl From<PathBuf> for Environment {
     }
 }
 
-impl Environment {
-    fn get_executable_path(&self) -> PathBuf {
+impl PythonEnvironment {
+    fn get_executable_path(&self, name: &str) -> PathBuf {
         let executable_name = if cfg!(target_os = "windows") {
-            "python.exe"
+            format!("{name}.exe")
         } else {
-            "python"
+            name.to_string()
         };
 
         let binaries_path = self.environment_path.join("bin");
         binaries_path.join(executable_name)
     }
 
-    fn command(&self, args: Vec<&str>) -> Result<(String, String), Error> {
-        let executable_path = self.get_executable_path();
+    fn command(
+        &self, executable_name: &str, args: Vec<&str>,
+    ) -> Result<(String, String), Error> {
+        let executable_path = self.get_executable_path(executable_name);
         let mut command = Command::new(executable_path);
 
         let output = command
@@ -56,8 +58,12 @@ impl Environment {
         Ok((stdout, stderr))
     }
 
+    pub fn python(&self, args: Vec<&str>) -> Result<(String, String), Error> {
+        self.command("python", args)
+    }
+
     pub fn version(&self) -> Result<String, Error> {
-        let (_, mut out) = self.command(vec!["--version"])?;
+        let (_, mut out) = self.python(vec!["--version"])?;
         out = out.trim().to_string();
         out = out.replace("Python ", "");
         out = out.replace(" :: Anaconda, Inc.", "");
