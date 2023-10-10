@@ -1,7 +1,7 @@
-mod environment;
+pub mod environment;
 mod install;
 
-use crate::sdk::conda::environment::Environment;
+use crate::sdk::conda::environment::PythonEnvironment;
 use crate::sdk::conda::install::install_conda;
 use std::{
     fs,
@@ -117,11 +117,11 @@ impl Conda {
         Ok(())
     }
 
-    pub fn get_environment(&self, name: &str) -> Environment {
+    pub fn get_environment(&self, name: &str) -> PythonEnvironment {
         let conda_envs_path = self.conda_path.join("envs");
         let environment_path = conda_envs_path.join(name);
 
-        Environment::from(environment_path)
+        PythonEnvironment::from(environment_path)
     }
 
     pub fn has_environment(&self, name: &str) -> bool {
