@@ -1,3 +1,12 @@
+# [0.3.0](https://github.com/gabrielhamel/wg-mod/compare/v0.2.3...v0.3.0) (2023-10-10)
+
+
+### Features
+
+* **environment:** create env from conda ([5b1acb1](https://github.com/gabrielhamel/wg-mod/commit/5b1acb1a5e6bf11a16ce267334aa3134a89d3b13))
+
+
+
 ## [0.2.3](https://github.com/gabrielhamel/wg-mod/compare/v0.2.2...v0.2.3) (2023-10-05)
 
 
