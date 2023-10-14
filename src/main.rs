@@ -1,5 +1,5 @@
 use crate::config::Configs;
-use crate::sdk::conda::environment::PythonEnvironment;
+use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
 
 mod builder;
@@ -23,7 +23,7 @@ async fn get_conda() -> Conda {
     conda
 }
 
-fn get_python_2_env(conda: Conda) -> PythonEnvironment {
+fn get_python_2_env(conda: Conda) -> CondaEnvironment {
     if !conda.has_environment("wg-mod") {
         println!("Create conda env...");
         conda.create_environment("wg-mod", "2").expect("");
@@ -35,8 +35,6 @@ fn get_python_2_env(conda: Conda) -> PythonEnvironment {
 #[tokio::main]
 async fn main() {
     let python_environment = get_python_2_env(get_conda().await);
-
-    println!("{:?}", python_environment.version());
 
     match cli::run() {
         | Err(err) => eprintln!("{:?}", err),

@@ -2,7 +2,7 @@ pub mod environment;
 mod install;
 
 use crate::config::ConfigsError;
-use crate::sdk::conda::environment::PythonEnvironment;
+use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::install::install_conda;
 use crate::utils::downloader::DownloadError;
 use std::{
@@ -95,13 +95,6 @@ impl Conda {
         }
     }
 
-    pub fn version(&self) -> Result<String, CondaError> {
-        let (mut out, _) = self.command(vec!["--version"])?;
-        out = out.trim().to_string();
-        out = out.replace("conda ", "");
-        Ok(out)
-    }
-
     pub fn create_environment(
         &self, name: &str, python_version: &str,
     ) -> Result<(), CondaError> {
@@ -119,11 +112,11 @@ impl Conda {
         Ok(())
     }
 
-    pub fn get_environment(&self, name: &str) -> PythonEnvironment {
+    pub fn get_environment(&self, name: &str) -> CondaEnvironment {
         let conda_envs_path = self.conda_path.join("envs");
         let environment_path = conda_envs_path.join(name);
 
-        PythonEnvironment::from(environment_path)
+        CondaEnvironment::from(environment_path)
     }
 
     pub fn has_environment(&self, name: &str) -> bool {

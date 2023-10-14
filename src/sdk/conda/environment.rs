@@ -3,7 +3,7 @@ use std::process::{Command, Output};
 use std::str::Utf8Error;
 
 #[derive(thiserror::Error, Debug)]
-pub enum PythonEnvironmentError {
+pub enum CondaEnvironmentError {
     #[error("Can't invoke command")]
     CommandInvokationError(std::io::Error),
 
@@ -14,11 +14,11 @@ pub enum PythonEnvironmentError {
     CommandOutputParsingError(#[from] Utf8Error),
 }
 
-pub struct PythonEnvironment {
+pub struct CondaEnvironment {
     environment_path: PathBuf,
 }
 
-impl From<PathBuf> for PythonEnvironment {
+impl From<PathBuf> for CondaEnvironment {
     fn from(path: PathBuf) -> Self {
         Self {
             environment_path: path,
@@ -26,7 +26,7 @@ impl From<PathBuf> for PythonEnvironment {
     }
 }
 
-impl PythonEnvironment {
+impl CondaEnvironment {
     fn get_executable_path(&self, name: &str) -> PathBuf {
         let executable_name = if cfg!(target_os = "windows") {
             format!("{name}.exe")
@@ -40,17 +40,17 @@ impl PythonEnvironment {
 
     fn command(
         &self, executable_name: &str, args: Vec<&str>,
-    ) -> Result<(String, String), PythonEnvironmentError> {
+    ) -> Result<(String, String), CondaEnvironmentError> {
         let executable_path = self.get_executable_path(executable_name);
         let mut command = Command::new(executable_path);
 
         let output = command
             .args(args)
             .output()
-            .map_err(PythonEnvironmentError::CommandInvokationError)?;
+            .map_err(CondaEnvironmentError::CommandInvokationError)?;
 
         if !output.status.success() {
-            return Err(PythonEnvironmentError::CommandError(output));
+            return Err(CondaEnvironmentError::CommandError(output));
         }
 
         let stdout = std::str::from_utf8(&output.stdout)?.to_string();
@@ -60,15 +60,7 @@ impl PythonEnvironment {
 
     pub fn python(
         &self, args: Vec<&str>,
-    ) -> Result<(String, String), PythonEnvironmentError> {
+    ) -> Result<(String, String), CondaEnvironmentError> {
         self.command("python", args)
-    }
-
-    pub fn version(&self) -> Result<String, PythonEnvironmentError> {
-        let (_, mut out) = self.python(vec!["--version"])?;
-        out = out.trim().to_string();
-        out = out.replace("Python ", "");
-        out = out.replace(" :: Anaconda, Inc.", "");
-        Ok(out)
     }
 }
