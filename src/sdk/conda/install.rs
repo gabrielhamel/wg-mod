@@ -1,11 +1,11 @@
-use crate::sdk::conda::Error;
+use crate::sdk::conda::CondaError;
 use crate::utils::downloader::download_file;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::{Command, Output};
 
-pub async fn install_conda(destination: &PathBuf) -> Result<(), Error> {
-    create_dir_all(destination).map_err(Error::CreateCondaDirectory)?;
+pub async fn install_conda(destination: &PathBuf) -> Result<(), CondaError> {
+    create_dir_all(destination).map_err(CondaError::CreateCondaDirectory)?;
 
     let install_script_name = get_install_script_name();
     let install_script_destination =
@@ -16,7 +16,8 @@ pub async fn install_conda(destination: &PathBuf) -> Result<(), Error> {
 
     download_file(&url, install_script_destination.as_str()).await?;
 
-    let install_destination = destination.to_str().ok_or(Error::PathError)?;
+    let install_destination =
+        destination.to_str().ok_or(CondaError::PathError)?;
     if cfg!(target_os = "windows") {
         install_on_windows(&install_script_destination, install_destination)?
     } else {
@@ -47,30 +48,30 @@ fn get_install_script_name() -> String {
 
 fn get_script_destination(
     install_destination: &PathBuf, script_name: &String,
-) -> Result<String, Error> {
+) -> Result<String, CondaError> {
     Ok(install_destination
         .parent()
-        .ok_or(Error::PathError)?
+        .ok_or(CondaError::PathError)?
         .join(PathBuf::from(&script_name))
         .to_str()
-        .ok_or(Error::PathError)?
+        .ok_or(CondaError::PathError)?
         .to_string())
 }
 
 fn install_on_windows(
     script_location: &String, conda_path: &str,
-) -> Result<Output, Error> {
+) -> Result<Output, CondaError> {
     Ok(Command::new(script_location)
         .args(["/S", &format!("/D={conda_path}")])
         .output()
-        .map_err(Error::InstallError)?)
+        .map_err(CondaError::InstallError)?)
 }
 
 fn install_on_linux_and_macos(
     script_location: &String, conda_path: &str,
-) -> Result<Output, Error> {
+) -> Result<Output, CondaError> {
     Ok(Command::new("sh")
         .args([script_location, "-p", conda_path, "-b", "-u"])
         .output()
-        .map_err(Error::InstallError)?)
+        .map_err(CondaError::InstallError)?)
 }

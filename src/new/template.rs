@@ -1,10 +1,12 @@
-use super::{Error, NewArgs};
-use crate::utils::file_template::write_template;
+use super::NewArgs;
+use crate::utils::file_template::{write_template, TemplateError};
 use convert_case::{Case, Casing};
 use serde_json::json;
 use std::path::PathBuf;
 
-fn template_meta(args: &NewArgs, parent_dir: &PathBuf) -> Result<(), Error> {
+fn template_meta(
+    args: &NewArgs, parent_dir: &PathBuf,
+) -> Result<(), TemplateError> {
     write_template(
         &parent_dir,
         "meta.xml",
@@ -27,7 +29,7 @@ fn template_meta(args: &NewArgs, parent_dir: &PathBuf) -> Result<(), Error> {
 
 fn template_script_entrypoint(
     args: &NewArgs, parent_dir: &PathBuf,
-) -> Result<(), Error> {
+) -> Result<(), TemplateError> {
     write_template(
         &parent_dir,
         &format!("mod_{}.py", args.name.to_case(Case::Snake)),
@@ -45,7 +47,7 @@ def fini():
     Ok(())
 }
 
-pub fn create_mod_files(args: NewArgs) -> Result<(), Error> {
+pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
     let kebab_name =
         args.name.from_case(Case::Alternating).to_case(Case::Kebab);
 

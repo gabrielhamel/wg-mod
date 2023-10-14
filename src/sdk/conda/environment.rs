@@ -3,7 +3,7 @@ use std::process::{Command, Output};
 use std::str::Utf8Error;
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum PythonEnvironmentError {
     #[error("Can't invoke command")]
     CommandInvokationError(std::io::Error),
 
@@ -40,17 +40,17 @@ impl PythonEnvironment {
 
     fn command(
         &self, executable_name: &str, args: Vec<&str>,
-    ) -> Result<(String, String), Error> {
+    ) -> Result<(String, String), PythonEnvironmentError> {
         let executable_path = self.get_executable_path(executable_name);
         let mut command = Command::new(executable_path);
 
         let output = command
             .args(args)
             .output()
-            .map_err(Error::CommandInvokationError)?;
+            .map_err(PythonEnvironmentError::CommandInvokationError)?;
 
         if !output.status.success() {
-            return Err(Error::CommandError(output));
+            return Err(PythonEnvironmentError::CommandError(output));
         }
 
         let stdout = std::str::from_utf8(&output.stdout)?.to_string();
@@ -58,11 +58,13 @@ impl PythonEnvironment {
         Ok((stdout, stderr))
     }
 
-    pub fn python(&self, args: Vec<&str>) -> Result<(String, String), Error> {
+    pub fn python(
+        &self, args: Vec<&str>,
+    ) -> Result<(String, String), PythonEnvironmentError> {
         self.command("python", args)
     }
 
-    pub fn version(&self) -> Result<String, Error> {
+    pub fn version(&self) -> Result<String, PythonEnvironmentError> {
         let (_, mut out) = self.python(vec!["--version"])?;
         out = out.trim().to_string();
         out = out.replace("Python ", "");

@@ -7,7 +7,7 @@ use std::{
 };
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum TemplateError {
     #[error("Error occured during file creation")]
     FileCreateError(io::Error, PathBuf),
 
@@ -20,19 +20,19 @@ pub enum Error {
 
 pub fn write_template<T>(
     dir: &PathBuf, filename: &str, template: &str, data: &T,
-) -> Result<(), Error>
+) -> Result<(), TemplateError>
 where
     T: Serialize,
 {
-    fs::create_dir_all(&dir).map_err(Error::DirectoryCreateError)?;
+    fs::create_dir_all(&dir).map_err(TemplateError::DirectoryCreateError)?;
 
     let filepath = dir.join(filename);
     let file = File::create(&filepath)
-        .map_err(|e| Error::FileCreateError(e, filepath))?;
+        .map_err(|e| TemplateError::FileCreateError(e, filepath))?;
 
     Handlebars::new()
         .render_template_to_write(template, data, file)
-        .map_err(Error::TemplateWriteError)
+        .map_err(TemplateError::TemplateWriteError)
 }
 
 #[test]
