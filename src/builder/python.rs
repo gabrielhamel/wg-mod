@@ -1,6 +1,4 @@
-use crate::sdk::conda::environment::{
-    PythonEnvironment, PythonEnvironmentError,
-};
+use crate::sdk::conda::environment::{CondaEnvironment, CondaEnvironmentError};
 use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
@@ -9,15 +7,15 @@ pub enum PythonBuilderError {
     PathError,
 
     #[error("Conda error")]
-    CondaError(#[from] PythonEnvironmentError),
+    CondaError(#[from] CondaEnvironmentError),
 }
 
 struct PythonBuilder {
-    conda_environment: PythonEnvironment,
+    conda_environment: CondaEnvironment,
 }
 
-impl From<PythonEnvironment> for PythonBuilder {
-    fn from(conda_environment: PythonEnvironment) -> Self {
+impl From<CondaEnvironment> for PythonBuilder {
+    fn from(conda_environment: CondaEnvironment) -> Self {
         Self { conda_environment }
     }
 }
