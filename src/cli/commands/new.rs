@@ -1,16 +1,12 @@
-use crate::{
-    cli::errors::Error as CommandError,
-    new::{template::create_mod_files, NewArgs},
-    utils::pattern_validator::PatternValidator,
-};
+use crate::cli::command::{CommandError, RunnableCommand};
+use crate::new::{template::create_mod_files, NewArgs};
+use crate::utils::pattern_validator::PatternValidator;
 use clap::{ArgMatches, Command};
 use convert_case::{Case, Casing};
 use std::path::PathBuf;
 
-use super::super::command::RunnableCommand;
-
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum NewCommandError {
     #[error("Invalid regex provided")]
     RegexBuildError(#[from] regex::Error),
 
@@ -18,9 +14,7 @@ pub enum Error {
     PromptError(#[from] inquire::InquireError),
 }
 
-type PromptResult<T> = Result<T, Error>;
-
-fn prompt_version() -> PromptResult<String> {
+fn prompt_version() -> Result<String, NewCommandError> {
     let validator = PatternValidator::new(
         r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$",
         "Your mod version must respect the semantic versioning",
@@ -34,7 +28,7 @@ fn prompt_version() -> PromptResult<String> {
     Ok(value)
 }
 
-fn prompt_name() -> PromptResult<String> {
+fn prompt_name() -> Result<String, NewCommandError> {
     let value = inquire::Text::new("Mod name:")
         .with_placeholder("Better Matchmaking")
         .prompt()?;
@@ -42,7 +36,7 @@ fn prompt_name() -> PromptResult<String> {
     Ok(value)
 }
 
-fn prompt_description() -> PromptResult<String> {
+fn prompt_description() -> Result<String, NewCommandError> {
     let value = inquire::Text::new("Description:")
         .with_placeholder("My first mod ! Hello world")
         .with_initial_value("")
@@ -51,7 +45,7 @@ fn prompt_description() -> PromptResult<String> {
     Ok(value)
 }
 
-fn prompt_package_name(name: &String) -> PromptResult<String> {
+fn prompt_package_name(name: &String) -> Result<String, NewCommandError> {
     let validator = PatternValidator::new(
         r"^([a-z]{1}[a-z-\d_]*\.)+[a-z][a-z-\d_]*$",
         "Your package name must be formated like this <prefix>.<dotted-namespace>.<mod-name>, only lower case allowed",
@@ -71,7 +65,7 @@ fn prompt_package_name(name: &String) -> PromptResult<String> {
     Ok(value)
 }
 
-fn collect_args() -> Result<NewArgs, Error> {
+fn collect_args() -> Result<NewArgs, NewCommandError> {
     let name = prompt_name()?;
     let version = prompt_version()?;
     let description = prompt_description()?;

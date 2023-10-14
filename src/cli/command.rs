@@ -1,11 +1,22 @@
+use crate::cli::commands::new::NewCommand;
 use clap::{ArgMatches, Command};
 
-use super::{commands::new::NewCommand, errors::Error};
+#[derive(thiserror::Error, Debug)]
+pub enum CommandError {
+    #[error("This command isn't implemented")]
+    CommandNotImplemented,
+
+    #[error("No command provided, refer to the help section")]
+    NoCommandProvided,
+
+    #[error("Error occurred during the command run")]
+    CommandExecutionError,
+}
 
 pub trait RunnableCommand {
     fn command() -> Command;
 
-    fn run(args: &ArgMatches) -> Result<(), Error>;
+    fn run(args: &ArgMatches) -> Result<(), CommandError>;
 }
 
 pub fn command() -> Command {

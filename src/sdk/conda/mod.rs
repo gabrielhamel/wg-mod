@@ -1,8 +1,10 @@
 pub mod environment;
 mod install;
 
+use crate::config::ConfigsError;
 use crate::sdk::conda::environment::PythonEnvironment;
 use crate::sdk::conda::install::install_conda;
+use crate::utils::downloader::DownloadError;
 use std::{
     fs,
     path::PathBuf,
@@ -11,12 +13,12 @@ use std::{
 };
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum CondaError {
     #[error("Can't access to configs")]
-    ConfigError(#[from] crate::config::Error),
+    ConfigsError(#[from] ConfigsError),
 
     #[error("Cannot download provided url")]
-    DownloadError(#[from] crate::utils::downloader::Error),
+    DownloadError(#[from] DownloadError),
 
     #[error("Cannot create the conda directory")]
     CreateCondaDirectory(std::io::Error),
@@ -64,9 +66,9 @@ impl Conda {
         self.conda_path.join(executable_name)
     }
 
-    fn command(&self, args: Vec<&str>) -> Result<(String, String), Error> {
+    fn command(&self, args: Vec<&str>) -> Result<(String, String), CondaError> {
         if !self.is_installed()? {
-            return Err(Error::NotInstalledError);
+            return Err(CondaError::NotInstalledError);
         }
 
         let executable_path = self.get_executable_path();
@@ -75,10 +77,10 @@ impl Conda {
         let output = command
             .args(args)
             .output()
-            .map_err(Error::CommandInvokationError)?;
+            .map_err(CondaError::CommandInvokationError)?;
 
         if !output.status.success() {
-            return Err(Error::CommandError(output));
+            return Err(CondaError::CommandError(output));
         }
 
         let stdout = std::str::from_utf8(&output.stdout)?.to_string();
@@ -86,14 +88,14 @@ impl Conda {
         Ok((stdout, stderr))
     }
 
-    pub fn is_installed(&self) -> Result<bool, Error> {
+    pub fn is_installed(&self) -> Result<bool, CondaError> {
         match fs::metadata(self.get_executable_path()) {
             | Ok(metadata) => Ok(metadata.is_file()),
             | Err(_) => Ok(false),
         }
     }
 
-    pub fn version(&self) -> Result<String, Error> {
+    pub fn version(&self) -> Result<String, CondaError> {
         let (mut out, _) = self.command(vec!["--version"])?;
         out = out.trim().to_string();
         out = out.replace("conda ", "");
@@ -102,7 +104,7 @@ impl Conda {
 
     pub fn create_environment(
         &self, name: &str, python_version: &str,
-    ) -> Result<(), Error> {
+    ) -> Result<(), CondaError> {
         self.command(vec![
             "create",
             "-p",
@@ -110,7 +112,7 @@ impl Conda {
                 .join("envs")
                 .join(name)
                 .to_str()
-                .ok_or(Error::PathError)?,
+                .ok_or(CondaError::PathError)?,
             &format!("python={}", python_version),
         ])?;
 
@@ -131,9 +133,9 @@ impl Conda {
         environment_path.exists()
     }
 
-    pub async fn install(&self) -> Result<(), Error> {
+    pub async fn install(&self) -> Result<(), CondaError> {
         if self.is_installed()? {
-            Err(Error::CondaAlreadyInstalled)
+            Err(CondaError::CondaAlreadyInstalled)
         } else {
             install_conda(&self.conda_path).await
         }

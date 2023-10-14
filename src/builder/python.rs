@@ -1,14 +1,15 @@
-use crate::sdk::conda;
-use crate::sdk::conda::environment::PythonEnvironment;
+use crate::sdk::conda::environment::{
+    PythonEnvironment, PythonEnvironmentError,
+};
 use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum PythonBuilderError {
     #[error("Cannot create a download directory")]
     PathError,
 
     #[error("Conda error")]
-    CondaError(#[from] conda::environment::Error),
+    CondaError(#[from] PythonEnvironmentError),
 }
 
 struct PythonBuilder {
@@ -22,8 +23,11 @@ impl From<PythonEnvironment> for PythonBuilder {
 }
 
 impl PythonBuilder {
-    fn compile_all(&self, directory: PathBuf) -> Result<(), Error> {
-        let readable_path = directory.to_str().ok_or(Error::PathError)?;
+    fn compile_all(
+        &self, directory: PathBuf,
+    ) -> Result<(), PythonBuilderError> {
+        let readable_path =
+            directory.to_str().ok_or(PythonBuilderError::PathError)?;
 
         self.conda_environment.python(vec![
             "-m",
