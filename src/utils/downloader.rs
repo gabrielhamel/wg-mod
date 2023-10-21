@@ -1,4 +1,3 @@
-use futures_util::StreamExt;
 use std::fs::File;
 use std::io::Write;
 
@@ -7,19 +6,16 @@ pub enum DownloadError {
     #[error("Failed to GET")]
     FetchError(#[from] reqwest::Error),
 
-    #[error("Error occured during file writting")]
+    #[error("Error occurred during file writing")]
     FileWriteError(#[from] std::io::Error),
 }
 
-pub async fn download_file(url: &str, path: &str) -> Result<(), DownloadError> {
-    let http_response = reqwest::get(url).await?;
-    let mut file = File::create(path)?;
-    let mut stream = http_response.bytes_stream();
+pub fn download_file(url: &str, path: &str) -> Result<(), DownloadError> {
+    let http_response = reqwest::blocking::get(url)?;
+    let bytes = http_response.bytes()?;
 
-    while let Some(item) = stream.next().await {
-        let chunk = item?;
-        file.write_all(&chunk)?;
-    }
+    let mut file = File::create(path)?;
+    file.write_all(&bytes)?;
 
     Ok(())
 }

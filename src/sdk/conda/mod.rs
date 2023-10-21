@@ -36,7 +36,7 @@ pub enum CondaError {
     InstallError(std::io::Error),
 
     #[error("Can't invoke command")]
-    CommandInvokationError(std::io::Error),
+    CommandInvocationError(std::io::Error),
 
     #[error("Command error")]
     CommandError(Output),
@@ -77,7 +77,7 @@ impl Conda {
         let output = command
             .args(args)
             .output()
-            .map_err(CondaError::CommandInvokationError)?;
+            .map_err(CondaError::CommandInvocationError)?;
 
         if !output.status.success() {
             return Err(CondaError::CommandError(output));
@@ -126,11 +126,11 @@ impl Conda {
         environment_path.exists()
     }
 
-    pub async fn install(&self) -> Result<(), CondaError> {
+    pub fn install(&self) -> Result<(), CondaError> {
         if self.is_installed()? {
             Err(CondaError::CondaAlreadyInstalled)
         } else {
-            install_conda(&self.conda_path).await
+            install_conda(&self.conda_path)
         }
     }
 }

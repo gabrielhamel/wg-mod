@@ -10,7 +10,7 @@ pub enum PythonBuilderError {
     CondaError(#[from] CondaEnvironmentError),
 }
 
-struct PythonBuilder {
+pub struct PythonBuilder {
     conda_environment: CondaEnvironment,
 }
 
@@ -21,7 +21,7 @@ impl From<CondaEnvironment> for PythonBuilder {
 }
 
 impl PythonBuilder {
-    fn compile_all(
+    pub fn compile_all(
         &self, directory: PathBuf,
     ) -> Result<(), PythonBuilderError> {
         let readable_path =

@@ -10,7 +10,7 @@ pub enum NewCommandError {
     #[error("Invalid regex provided")]
     RegexBuildError(#[from] regex::Error),
 
-    #[error("Error occured during prompt")]
+    #[error("Error occurred during prompt")]
     PromptError(#[from] inquire::InquireError),
 }
 

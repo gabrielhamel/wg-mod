@@ -9,7 +9,7 @@ mod new;
 mod sdk;
 mod utils;
 
-async fn get_conda() -> Conda {
+fn get_conda() -> Conda {
     let config = Configs::load().expect("");
 
     let conda_path = config.wg_mod_home.join("conda");
@@ -17,13 +17,13 @@ async fn get_conda() -> Conda {
 
     if !conda.is_installed().expect("") {
         println!("Installing conda...");
-        conda.install().await.expect("");
+        conda.install().expect("");
     }
 
     conda
 }
 
-fn get_python_2_env(conda: Conda) -> CondaEnvironment {
+fn get_python_2_environment(conda: Conda) -> CondaEnvironment {
     if !conda.has_environment("wg-mod") {
         println!("Create conda env...");
         conda.create_environment("wg-mod", "2").expect("");
@@ -32,9 +32,12 @@ fn get_python_2_env(conda: Conda) -> CondaEnvironment {
     conda.get_environment("wg-mod")
 }
 
-#[tokio::main]
-async fn main() {
-    let python_environment = get_python_2_env(get_conda().await);
+fn main() {
+    let conda = get_conda();
+    let conda_environment = get_python_2_environment(conda);
+
+    // let python_builder = PythonBuilder::from(conda_environment);
+    // python_builder.compile_all(PathBuf::from("/Users/gabriel/Development/wot/WoT-Replay-Timeline/scripts")).expect("");
 
     match cli::run() {
         | Err(err) => eprintln!("{:?}", err),
