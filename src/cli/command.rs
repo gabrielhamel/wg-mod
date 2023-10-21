@@ -1,3 +1,4 @@
+use crate::cli::commands::build::BuildCommand;
 use crate::cli::commands::new::NewCommand;
 use clap::{ArgMatches, Command};
 
@@ -26,4 +27,5 @@ pub fn command() -> Command {
         .about("Provides tools for wargaming modding")
         .subcommand_required(true)
         .subcommand(NewCommand::command())
+        .subcommand(BuildCommand::command())
 }
