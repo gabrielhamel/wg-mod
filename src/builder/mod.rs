@@ -1,18 +1,45 @@
-// use crate::{get_conda, get_python_2_environment};
-// use crate::builder::python::PythonBuilder;
-
 mod python;
 
-struct ModBuilder;
+use crate::builder::python::{PythonBuilder, PythonBuilderError};
+use std::path::PathBuf;
 
-// impl ModBuilder {
-//     fn new() -> Self {
-//         let conda = get_conda();
-//         let conda_environment = get_python_2_environment(conda);
-//         let python_builder = PythonBuilder::from(conda_environment);
-//
-//         Self {
-//             python_builder =
-//         }
-//     }
-// }
+#[derive(thiserror::Error, Debug)]
+pub enum ModBuilderError {
+    #[error("Failed to use the python mod builder")]
+    PythonBuilderError(#[from] PythonBuilderError),
+
+    #[error("Not a mod folder")]
+    BadModFolderError,
+}
+
+pub struct ModBuilder {
+    python_builder: PythonBuilder,
+    mod_path: PathBuf,
+}
+
+impl ModBuilder {
+    pub fn new(mod_path: PathBuf) -> Result<Self, ModBuilderError> {
+        let python_builder = PythonBuilder::new()?;
+
+        Ok(Self {
+            python_builder,
+            mod_path,
+        })
+    }
+
+    pub fn build(&self) -> Result<(), ModBuilderError> {
+        let is_mod_folder = self.is_mod_folder();
+        if is_mod_folder == false {
+            return Err(ModBuilderError::BadModFolderError);
+        }
+
+        let script_path = self.mod_path.join("scripts");
+        self.python_builder.build(script_path)?;
+        Ok(())
+    }
+
+    fn is_mod_folder(&self) -> bool {
+        let meta_path = self.mod_path.join("meta.xml");
+        meta_path.exists()
+    }
+}

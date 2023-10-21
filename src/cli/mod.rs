@@ -1,7 +1,10 @@
 mod command;
 pub mod commands;
 
-use self::{command::RunnableCommand, commands::new::NewCommand};
+use self::{
+    command::RunnableCommand, commands::build::BuildCommand,
+    commands::new::NewCommand,
+};
 use crate::cli::command::CommandError;
 
 pub fn run() -> Result<(), CommandError> {
@@ -9,6 +12,7 @@ pub fn run() -> Result<(), CommandError> {
 
     match matches.subcommand() {
         | Some(("new", args)) => NewCommand::run(args),
+        | Some(("build", args)) => BuildCommand::run(args),
         | Some((_, _)) => Err(CommandError::CommandNotImplemented),
         | None => Err(CommandError::NoCommandProvided),
     }
