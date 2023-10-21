@@ -8,7 +8,7 @@ use std::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum TemplateError {
-    #[error("Error occured during file creation")]
+    #[error("Error occurred during file creation")]
     FileCreateError(io::Error, PathBuf),
 
     #[error("Unable to write in this file")]

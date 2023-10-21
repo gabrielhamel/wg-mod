@@ -1,10 +1,11 @@
 use crate::sdk::conda::CondaError;
 use crate::utils::downloader::download_file;
+use std::fs;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::{Command, Output};
 
-pub async fn install_conda(destination: &PathBuf) -> Result<(), CondaError> {
+pub fn install_conda(destination: &PathBuf) -> Result<(), CondaError> {
     create_dir_all(destination).map_err(CondaError::CreateCondaDirectory)?;
 
     let install_script_name = get_install_script_name();
@@ -14,7 +15,7 @@ pub async fn install_conda(destination: &PathBuf) -> Result<(), CondaError> {
     let url =
         format!("https://repo.anaconda.com/miniconda/{install_script_name}");
 
-    download_file(&url, install_script_destination.as_str()).await?;
+    download_file(&url, install_script_destination.as_str())?;
 
     let install_destination =
         destination.to_str().ok_or(CondaError::PathError)?;
@@ -26,6 +27,9 @@ pub async fn install_conda(destination: &PathBuf) -> Result<(), CondaError> {
             install_destination,
         )?
     };
+
+    fs::remove_file(install_script_destination)
+        .map_err(CondaError::InstallError)?;
 
     Ok(())
 }
