@@ -1,3 +1,13 @@
+# [0.4.0](https://github.com/gabrielhamel/wg-mod/compare/v0.3.0...v0.4.0) (2023-10-22)
+
+
+### Features
+
+* **builder:** Build python into target directory ([65ea804](https://github.com/gabrielhamel/wg-mod/commit/65ea8044c80e89d426bb7898bca908664da10404))
+* **builder:** Python builder with it's command ([7ef8440](https://github.com/gabrielhamel/wg-mod/commit/7ef8440d67949fde7a1b7a168d74486156dcc02a))
+
+
+
 # [0.3.0](https://github.com/gabrielhamel/wg-mod/compare/v0.2.3...v0.3.0) (2023-10-10)
 
 
