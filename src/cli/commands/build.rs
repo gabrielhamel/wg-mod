@@ -29,7 +29,10 @@ impl RunnableCommand for BuildCommand {
     fn run(_: &ArgMatches) -> Result<(), CommandError> {
         match build() {
             | Ok(()) => Ok(()),
-            | Err(_) => Err(CommandError::CommandExecutionError),
+            | Err(e) => {
+                eprintln!("Error: {}", e.to_string());
+                Err(CommandError::CommandExecutionError)
+            },
         }
     }
 }

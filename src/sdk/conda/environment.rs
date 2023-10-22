@@ -55,6 +55,7 @@ impl CondaEnvironment {
 
         let stdout = std::str::from_utf8(&output.stdout)?.to_string();
         let stderr = std::str::from_utf8(&output.stderr)?.to_string();
+
         Ok((stdout, stderr))
     }
 

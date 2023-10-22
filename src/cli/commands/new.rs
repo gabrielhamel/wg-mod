@@ -3,6 +3,7 @@ use crate::new::{template::create_mod_files, NewArgs};
 use crate::utils::pattern_validator::PatternValidator;
 use clap::{ArgMatches, Command};
 use convert_case::{Case, Casing};
+use inquire::min_length;
 use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
@@ -31,6 +32,7 @@ fn prompt_version() -> Result<String, NewCommandError> {
 fn prompt_name() -> Result<String, NewCommandError> {
     let value = inquire::Text::new("Mod name:")
         .with_placeholder("Better Matchmaking")
+        .with_validator(min_length!(2, "Minimum of 2 characters required"))
         .prompt()?;
 
     Ok(value)
@@ -94,9 +96,15 @@ impl RunnableCommand for NewCommand {
         match collect_args() {
             | Ok(args) => match create_mod_files(args) {
                 | Ok(()) => Ok(()),
-                | Err(_) => Err(CommandError::CommandExecutionError),
+                | Err(e) => {
+                    eprintln!("Error: {}", e.to_string());
+                    Err(CommandError::CommandExecutionError)
+                },
             },
-            | Err(_) => Err(CommandError::CommandExecutionError),
+            | Err(e) => {
+                eprintln!("Error: {}", e.to_string());
+                Err(CommandError::CommandExecutionError)
+            },
         }
     }
 }

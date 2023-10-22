@@ -55,14 +55,14 @@ impl PythonBuilder {
         Ok(Self { conda_environment })
     }
 
-    pub fn build(&self, directory: PathBuf) -> Result<(), PythonBuilderError> {
-        let readable_path =
+    pub fn build(&self, directory: &PathBuf) -> Result<(), PythonBuilderError> {
+        let python_src_directory =
             directory.to_str().ok_or(PythonBuilderError::PathError)?;
 
         self.conda_environment.python(vec![
             "-m",
             "compileall",
-            readable_path,
+            python_src_directory,
         ])?;
 
         Ok(())
