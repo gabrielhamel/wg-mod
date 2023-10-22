@@ -47,6 +47,23 @@ def fini():
     Ok(())
 }
 
+fn template_git_ignore(
+    _: &NewArgs, parent_dir: &PathBuf,
+) -> Result<(), TemplateError> {
+    write_template(
+        &parent_dir,
+        ".gitignore",
+        "/.idea
+/.vscode
+/target
+.DS_Store
+",
+        &json!({}),
+    )?;
+
+    Ok(())
+}
+
 pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
     let kebab_name =
         args.name.from_case(Case::Alternating).to_case(Case::Kebab);
@@ -56,6 +73,8 @@ pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
 
     let scripts_entrypoint_path = &root_path.join("scripts");
     template_script_entrypoint(&args, &scripts_entrypoint_path)?;
+
+    template_git_ignore(&args, &root_path)?;
 
     Ok(())
 }
