@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
 pub enum BuildCommandError {
-    #[error("Failed to use build tools")]
+    #[error("Failed to use build tools\n{0}")]
     ModBuilderError(#[from] ModBuilderError),
 }
 
@@ -29,10 +29,7 @@ impl RunnableCommand for BuildCommand {
     fn run(_: &ArgMatches) -> Result<(), CommandError> {
         match build() {
             | Ok(()) => Ok(()),
-            | Err(e) => {
-                eprintln!("Error: {}", e.to_string());
-                Err(CommandError::CommandExecutionError)
-            },
+            | Err(e) => Err(CommandError::CommandExecutionError(e.to_string())),
         }
     }
 }

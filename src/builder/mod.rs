@@ -8,17 +8,17 @@ use std::{fs, io};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ModBuilderError {
-    #[error("Failed to use the python mod builder")]
+    #[error("Failed to use the python mod builder\n{0}")]
     PythonBuilderError(#[from] PythonBuilderError),
 
-    #[error("Copy directory failed")]
+    #[error("Copy directory failed\n{0}")]
     CopyDirectoryError(#[from] fs_extra::error::Error),
 
-    #[error("Glob error")]
+    #[error("Glob error\n{0}")]
     GlobError(#[from] glob::GlobError),
 
-    #[error("Not a mod folder")]
-    BadModFolderError,
+    #[error("The path \"{0}\" isn't a mod folder")]
+    BadModFolderError(PathBuf),
 
     #[error("Path error")]
     PathError,
@@ -88,7 +88,11 @@ impl ModBuilder {
     pub fn build(&self) -> Result<(), ModBuilderError> {
         let is_mod_folder = self.is_mod_folder();
         if is_mod_folder == false {
-            return Err(ModBuilderError::BadModFolderError);
+            let absolute_mod_folder_path = fs::canonicalize(&self.mod_path)
+                .map_err(|_| ModBuilderError::PathError)?;
+            return Err(ModBuilderError::BadModFolderError(
+                absolute_mod_folder_path,
+            ));
         }
 
         self.clean_target_directory()?;

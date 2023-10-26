@@ -97,14 +97,10 @@ impl RunnableCommand for NewCommand {
             | Ok(args) => match create_mod_files(args) {
                 | Ok(()) => Ok(()),
                 | Err(e) => {
-                    eprintln!("Error: {}", e.to_string());
-                    Err(CommandError::CommandExecutionError)
+                    Err(CommandError::CommandExecutionError(e.to_string()))
                 },
             },
-            | Err(e) => {
-                eprintln!("Error: {}", e.to_string());
-                Err(CommandError::CommandExecutionError)
-            },
+            | Err(e) => Err(CommandError::CommandExecutionError(e.to_string())),
         }
     }
 }
