@@ -10,8 +10,8 @@ pub enum CommandError {
     #[error("No command provided, refer to the help section")]
     NoCommandProvided,
 
-    #[error("Error occurred during the command run")]
-    CommandExecutionError,
+    #[error("Error occurred during the command execution\n{0}")]
+    CommandExecutionError(String),
 }
 
 pub trait RunnableCommand {
@@ -22,9 +22,9 @@ pub trait RunnableCommand {
 
 pub fn command() -> Command {
     Command::new("wg-mod")
-        .version("0.1.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .author("Gabriel Hamel <gabriel.hamel.pro@gmail.com>")
-        .about("Provides tools for wargaming modding")
+        .about("Provides cli tools for Wargaming games modding")
         .subcommand_required(true)
         .subcommand(NewCommand::command())
         .subcommand(BuildCommand::command())
