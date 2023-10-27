@@ -5,12 +5,13 @@
 Features:
 
 - Init mod project
+- Mod builder Python only
 - Available Windows / Linux / Macos (yes i know)
 
 Comming:
 
 - Auto prepare dev environment
-- Mod builder (python + AS3)
+- Mod builder AS3
 - WoT debbuger
 
 I will track the development [here](https://github.com/users/gabrielhamel/projects/5)
@@ -29,6 +30,11 @@ Create a new mod directory
 
 ```bash
 wg-mod new
+```
+
+Build a .wotmod file
+```bash
+wg-mod build # In mod directory
 ```
 
 ## Development
