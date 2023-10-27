@@ -1,3 +1,12 @@
+## [0.4.1](https://github.com/gabrielhamel/wg-mod/compare/v0.4.0...v0.4.1) (2023-10-27)
+
+
+### Bug Fixes
+
+* Repair mod build on windows ([e88a469](https://github.com/gabrielhamel/wg-mod/commit/e88a469be9976e5eeeb43fb67fe983de34363076))
+
+
+
 # [0.4.0](https://github.com/gabrielhamel/wg-mod/compare/v0.3.0...v0.4.0) (2023-10-22)
 
 
