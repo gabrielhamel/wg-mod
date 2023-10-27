@@ -4,8 +4,8 @@ use std::str::Utf8Error;
 
 #[derive(thiserror::Error, Debug)]
 pub enum CondaEnvironmentError {
-    #[error("Can't invoke command")]
-    CommandInvokationError(std::io::Error),
+    #[error("Can't invoke command: {0}")]
+    CommandInvocationError(PathBuf),
 
     #[error("Command error")]
     CommandError(Output),
@@ -28,26 +28,27 @@ impl From<PathBuf> for CondaEnvironment {
 
 impl CondaEnvironment {
     fn get_executable_path(&self, name: &str) -> PathBuf {
+        let mut conda_binaries_path = self.environment_path.clone();
+
         let executable_name = if cfg!(target_os = "windows") {
             format!("{name}.exe")
         } else {
+            conda_binaries_path = conda_binaries_path.join("bin");
             name.to_string()
         };
 
-        let binaries_path = self.environment_path.join("bin");
-        binaries_path.join(executable_name)
+        conda_binaries_path.join(executable_name)
     }
 
     fn command(
         &self, executable_name: &str, args: Vec<&str>,
     ) -> Result<(String, String), CondaEnvironmentError> {
         let executable_path = self.get_executable_path(executable_name);
-        let mut command = Command::new(executable_path);
+        let mut command = Command::new(&executable_path);
 
-        let output = command
-            .args(args)
-            .output()
-            .map_err(CondaEnvironmentError::CommandInvokationError)?;
+        let output = command.args(args).output().map_err(|_| {
+            CondaEnvironmentError::CommandInvocationError(executable_path)
+        })?;
 
         if !output.status.success() {
             return Err(CondaEnvironmentError::CommandError(output));

@@ -8,10 +8,10 @@ pub enum PythonBuilderError {
     #[error("Cannot create a download directory")]
     PathError,
 
-    #[error("Conda environment error")]
+    #[error("Conda environment error\n{0}")]
     CondaEnvironmentError(#[from] CondaEnvironmentError),
 
-    #[error("Conda error")]
+    #[error("Conda error\n{0}")]
     CondaError(#[from] CondaError),
 
     #[error("Can't access to configs")]
