@@ -90,6 +90,7 @@ impl ModBuilder {
         if is_mod_folder == false {
             let absolute_mod_folder_path = fs::canonicalize(&self.mod_path)
                 .map_err(|_| ModBuilderError::PathError)?;
+
             return Err(ModBuilderError::BadModFolderError(
                 absolute_mod_folder_path,
             ));
