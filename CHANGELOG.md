@@ -1,3 +1,12 @@
+# [0.5.0](https://github.com/gabrielhamel/wg-mod/compare/v0.4.1...v0.5.0) (2023-10-28)
+
+
+### Features
+
+* Create wotmod archive ([eda1337](https://github.com/gabrielhamel/wg-mod/commit/eda13377b396093b99efff2859134c3470c8edec))
+
+
+
 ## [0.4.1](https://github.com/gabrielhamel/wg-mod/compare/v0.4.0...v0.4.1) (2023-10-27)
 
 
