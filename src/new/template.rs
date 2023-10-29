@@ -1,4 +1,5 @@
 use super::NewArgs;
+use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
 use crate::utils::file_template::{write_template, TemplateError};
 use convert_case::{Case, Casing};
 use serde_json::json;
@@ -47,9 +48,7 @@ def fini():
     Ok(())
 }
 
-fn template_git_ignore(
-    _: &NewArgs, parent_dir: &PathBuf,
-) -> Result<(), TemplateError> {
+fn template_git_ignore(parent_dir: &PathBuf) -> Result<(), TemplateError> {
     write_template(
         &parent_dir,
         ".gitignore",
@@ -64,17 +63,28 @@ fn template_git_ignore(
     Ok(())
 }
 
+fn init_git_repository(directory: &PathBuf) -> Result<(), TemplateError> {
+    template_git_ignore(directory)?;
+
+    git2::Repository::init(directory)?;
+
+    Ok(())
+}
+
 pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
     let kebab_name =
         args.name.from_case(Case::Alternating).to_case(Case::Kebab);
 
-    let root_path = args.directory.join(kebab_name);
+    let root_path = args.directory.join(&kebab_name);
     template_meta(&args, &root_path)?;
 
     let scripts_entrypoint_path = &root_path.join("scripts");
     template_script_entrypoint(&args, &scripts_entrypoint_path)?;
 
-    template_git_ignore(&args, &root_path)?;
+    init_git_repository(&root_path)?;
+
+    let absolute_mod_path = convert_to_absolute_path(&root_path)?;
+    println!("Success! Created {kebab_name} at {absolute_mod_path}");
 
     Ok(())
 }

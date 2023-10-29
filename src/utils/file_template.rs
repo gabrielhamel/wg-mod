@@ -1,3 +1,4 @@
+use crate::utils::convert_to_absolute_path::ConvertAbsolutePathError;
 use handlebars::Handlebars;
 use serde::Serialize;
 use std::{
@@ -16,6 +17,12 @@ pub enum TemplateError {
 
     #[error("Unable to create directory")]
     DirectoryCreateError(io::Error),
+
+    #[error("Failed to init git repository")]
+    GitInitError(#[from] git2::Error),
+
+    #[error("Unable to display absolute mod path")]
+    ConvertAbsolutePath(#[from] ConvertAbsolutePathError),
 }
 
 pub fn write_template<T>(
@@ -57,9 +64,9 @@ fn file_template() {
 
     let mut file = File::open(&filepath).unwrap();
     let mut file_content = String::new();
-    let bytes_readed = file.read_to_string(&mut file_content).unwrap();
+    let bytes_reads = file.read_to_string(&mut file_content).unwrap();
 
-    assert_eq!(bytes_readed, 13);
+    assert_eq!(bytes_reads, 13);
     assert_eq!(file_content, "Hello world !");
 
     tmp_dir.close().unwrap();
