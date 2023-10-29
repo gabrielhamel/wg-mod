@@ -12,6 +12,9 @@ pub enum CondaEnvironmentError {
 
     #[error("Cannot read the command output")]
     CommandOutputParsingError(#[from] Utf8Error),
+
+    #[error("Unable to reads sources directory")]
+    PathError,
 }
 
 pub struct CondaEnvironment {
@@ -27,17 +30,21 @@ impl From<PathBuf> for CondaEnvironment {
 }
 
 impl CondaEnvironment {
-    fn get_executable_path(&self, name: &str) -> PathBuf {
-        let mut conda_binaries_path = self.environment_path.clone();
+    pub fn compile_all(
+        &self, directory: &PathBuf,
+    ) -> Result<(), CondaEnvironmentError> {
+        let python_src =
+            directory.to_str().ok_or(CondaEnvironmentError::PathError)?;
 
-        let executable_name = if cfg!(target_os = "windows") {
-            format!("{name}.exe")
-        } else {
-            conda_binaries_path = conda_binaries_path.join("bin");
-            name.to_string()
-        };
+        self.python(vec!["-m", "compileall", python_src])?;
 
-        conda_binaries_path.join(executable_name)
+        Ok(())
+    }
+
+    fn python(
+        &self, args: Vec<&str>,
+    ) -> Result<(String, String), CondaEnvironmentError> {
+        self.command("python", args)
     }
 
     fn command(
@@ -60,9 +67,16 @@ impl CondaEnvironment {
         Ok((stdout, stderr))
     }
 
-    pub fn python(
-        &self, args: Vec<&str>,
-    ) -> Result<(String, String), CondaEnvironmentError> {
-        self.command("python", args)
+    fn get_executable_path(&self, name: &str) -> PathBuf {
+        let mut conda_binaries_path = self.environment_path.clone();
+
+        let executable_name = if cfg!(target_os = "windows") {
+            format!("{name}.exe")
+        } else {
+            conda_binaries_path = conda_binaries_path.join("bin");
+            name.to_string()
+        };
+
+        conda_binaries_path.join(executable_name)
     }
 }
