@@ -28,9 +28,6 @@ pub enum ModBuilderError {
     #[error("Path error")]
     PathError,
 
-    #[error("Can't create target directory")]
-    WriteFolderError(io::Error),
-
     #[error("Can't copy or create files\n{0}")]
     WriteFilesError(io::Error),
 
@@ -44,34 +41,37 @@ pub enum ModBuilderError {
 pub struct ModBuilder {
     python_builder: PythonBuilder,
     mod_path: PathBuf,
-    target_directory: PathBuf,
+    target_path: PathBuf,
     build_path: PathBuf,
 }
 
 impl ModBuilder {
     pub fn new(mod_path: PathBuf) -> Result<Self, ModBuilderError> {
         let python_builder = PythonBuilder::new()?;
-        let target_directory = mod_path.join("target");
-        let build_path = target_directory.join("release").join("build");
+        let target_path = mod_path.join("target");
+        let build_path = target_path.join("build");
 
         Ok(Self {
             python_builder,
             mod_path,
-            target_directory,
+            target_path,
             build_path,
         })
     }
 
     fn clean_target_directory(&self) -> Result<(), ModBuilderError> {
-        let _ = fs::remove_dir_all(&self.target_directory);
+        let _ = fs::remove_dir_all(&self.target_path);
 
         Ok(())
     }
 
     fn build_python_src(&self) -> Result<(), ModBuilderError> {
         let python_sources = self.mod_path.join("scripts");
+        let python_build_destination =
+            self.build_path.join("res/scripts/client/gui/mods");
+
         self.python_builder
-            .build(&python_sources, &self.build_path)?;
+            .build(&python_sources, &python_build_destination)?;
 
         Ok(())
     }
@@ -86,8 +86,7 @@ impl ModBuilder {
     }
 
     fn make_archive(&self) -> Result<PathBuf, ModBuilderError> {
-        let archive_file =
-            self.target_directory.join("release").join("result.wotmod");
+        let archive_file = self.target_path.join("result.wotmod");
 
         zip_create_from_directory_with_options(
             &archive_file,
