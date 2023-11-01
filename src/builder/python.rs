@@ -1,4 +1,3 @@
-use crate::builder::ModBuilderError;
 use crate::config::{Configs, ConfigsError};
 use crate::sdk::conda::environment::{CondaEnvironment, CondaEnvironmentError};
 use crate::sdk::conda::{Conda, CondaError};
@@ -7,7 +6,7 @@ use glob::glob;
 use std::fs::{create_dir_all, remove_file};
 use std::io;
 use std::path::PathBuf;
-use tempfile::{tempdir, TempDir};
+use tempfile::tempdir;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PythonBuilderError {
