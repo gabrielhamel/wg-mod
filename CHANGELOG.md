@@ -1,3 +1,12 @@
+# [0.6.0](https://github.com/gabrielhamel/wg-mod/compare/v0.5.0...v0.6.0) (2023-11-01)
+
+
+### Features
+
+* **git:** Init git repository ([65455dd](https://github.com/gabrielhamel/wg-mod/commit/65455dde8020b19f574e31bfe6b8c9e76b8a840d))
+
+
+
 # [0.5.0](https://github.com/gabrielhamel/wg-mod/compare/v0.4.1...v0.5.0) (2023-10-28)
 
 
