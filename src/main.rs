@@ -10,8 +10,7 @@ mod utils;
 
 fn main() {
     let path = PathBuf::from("/Users/gabriel/.wg-mod/wot-src");
-    let gs = GameSources::new(&path).expect("");
-    println!("{:?}", gs.list_branches().expect(""));
+    GameSources::new(&path).expect("");
 
     match cli::run() {
         | Err(err) => eprintln!("{}", err.to_string()),
