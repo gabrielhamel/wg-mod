@@ -1,3 +1,13 @@
+# [0.7.0](https://github.com/gabrielhamel/wg-mod/compare/v0.6.0...v0.7.0) (2023-11-04)
+
+
+### Features
+
+* Game SDK with channel listing ([96bd9e9](https://github.com/gabrielhamel/wg-mod/commit/96bd9e9f268c9a4bb41237ac47f50ee77735b6ab))
+* **game sources:** Select dev channel ([6bc7993](https://github.com/gabrielhamel/wg-mod/commit/6bc7993b1951f04e4697565358cff9deb12a80de))
+
+
+
 # [0.6.0](https://github.com/gabrielhamel/wg-mod/compare/v0.5.0...v0.6.0) (2023-11-01)
 
 
