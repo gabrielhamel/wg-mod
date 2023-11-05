@@ -82,7 +82,7 @@ fn get_default_remote(
 }
 
 impl GameSources {
-    pub fn new(path: &PathBuf) -> Result<Self, GameSourcesError> {
+    pub fn load(path: &PathBuf) -> Result<Self, GameSourcesError> {
         let already_exists = path.exists();
 
         let repository = get_repository(&path, !already_exists)?;

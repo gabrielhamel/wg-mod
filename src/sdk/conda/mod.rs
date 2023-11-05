@@ -58,7 +58,7 @@ impl From<PathBuf> for Conda {
 impl Conda {
     fn get_executable_path(&self) -> PathBuf {
         let executable_name = if cfg!(target_os = "windows") {
-            "_conda.exe"
+            "condabin\\conda.bat"
         } else {
             "bin/conda"
         };
