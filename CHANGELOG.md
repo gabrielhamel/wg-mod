@@ -1,3 +1,12 @@
+## [0.7.1](https://github.com/gabrielhamel/wg-mod/compare/v0.7.0...v0.7.1) (2023-11-05)
+
+
+### Bug Fixes
+
+* Game sdk path ([ddd282a](https://github.com/gabrielhamel/wg-mod/commit/ddd282ac6726243edc37e0b2cff12dd39bd88db7))
+
+
+
 # [0.7.0](https://github.com/gabrielhamel/wg-mod/compare/v0.6.0...v0.7.0) (2023-11-04)
 
 
