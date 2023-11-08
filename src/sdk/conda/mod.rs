@@ -1,7 +1,6 @@
 pub mod environment;
 mod install;
 
-use crate::config::ConfigsError;
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::install::install_conda;
 use crate::utils::downloader::DownloadError;
@@ -14,9 +13,6 @@ use std::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum CondaError {
-    #[error("Can't access to configs")]
-    ConfigsError(#[from] ConfigsError),
-
     #[error("Cannot download provided url")]
     DownloadError(#[from] DownloadError),
 
