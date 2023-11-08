@@ -1,3 +1,4 @@
+use fs_extra::dir::get_dir_content;
 use git2::{
     Branch, BranchType, FetchOptions, Remote, RemoteCallbacks, Repository,
 };
@@ -20,6 +21,12 @@ pub enum GameSourcesError {
 
     #[error("An error occurred during user prompting")]
     CliPromptError(#[from] inquire::InquireError),
+
+    #[error("Invalid path")]
+    PathError,
+
+    #[error("Unable to walk in the directory")]
+    FilesystemError(#[from] fs_extra::error::Error),
 }
 
 pub struct GameSources {
@@ -150,5 +157,34 @@ impl GameSources {
         }?;
 
         Ok(())
+    }
+
+    pub fn list_python_root_modules(
+        &self,
+    ) -> Result<Vec<String>, GameSourcesError> {
+        let sources_path = self
+            .repository
+            .path()
+            .parent()
+            .ok_or(GameSourcesError::PathError)?;
+        let python_sources_path = sources_path.join("sources/res");
+        let directory_content = get_dir_content(python_sources_path)?;
+        let every_folders = directory_content.directories;
+        let is_root_modules = |folder: &String| {
+            folder.ends_with("scripts/common")
+                || folder.ends_with("scripts/client")
+                || folder.ends_with("scripts/client_common")
+        };
+
+        Ok(every_folders
+            .iter()
+            .filter_map(|folder| {
+                if is_root_modules(folder) {
+                    Some(folder.clone())
+                } else {
+                    None
+                }
+            })
+            .collect())
     }
 }

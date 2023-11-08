@@ -1,5 +1,6 @@
 use crate::cli::commands::build::BuildCommand;
 use crate::cli::commands::new::NewCommand;
+use crate::cli::commands::pycharm::PycharmCommand;
 use clap::{ArgMatches, Command};
 
 #[derive(thiserror::Error, Debug)]
@@ -28,4 +29,5 @@ pub fn command() -> Command {
         .subcommand_required(true)
         .subcommand(NewCommand::command())
         .subcommand(BuildCommand::command())
+        .subcommand(PycharmCommand::command())
 }

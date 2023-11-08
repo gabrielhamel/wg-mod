@@ -1,6 +1,6 @@
 use crate::config::{Configs, ConfigsError};
 use crate::sdk::conda::environment::{CondaEnvironment, CondaEnvironmentError};
-use crate::sdk::conda::{Conda, CondaError};
+use crate::sdk::conda::CondaError;
 use crate::utils::copy_directory::{copy_directory, CopyDirectoryError};
 use glob::glob;
 use std::fs::{create_dir_all, remove_file};
@@ -42,37 +42,13 @@ pub struct PythonBuilder {
     conda_environment: CondaEnvironment,
 }
 
-fn get_conda() -> Result<Conda, PythonBuilderError> {
-    let config = Configs::load()?;
-
-    let conda_path = config.wg_mod_home.join("conda");
-    let conda = Conda::from(conda_path);
-
-    if !conda.is_installed().expect("") {
-        println!("Installing conda...");
-        conda.install().expect("");
-    }
-
-    Ok(conda)
-}
-
-fn get_python_2_environment(
-    conda: Conda,
-) -> Result<CondaEnvironment, PythonBuilderError> {
-    if !conda.has_environment("wg-mod") {
-        println!("Create conda env...");
-        conda.create_environment("wg-mod", "2")?;
-    }
-
-    Ok(conda.get_environment("wg-mod"))
-}
-
 impl PythonBuilder {
     pub fn new() -> Result<Self, PythonBuilderError> {
-        let conda = get_conda()?;
-        let conda_environment = get_python_2_environment(conda)?;
+        let configs = Configs::load()?;
 
-        Ok(Self { conda_environment })
+        Ok(Self {
+            conda_environment: configs.conda_environment,
+        })
     }
 
     pub fn build(
