@@ -19,3 +19,23 @@ jobs:
 
       - name: Publish the crate
         run: cargo publish
+
+  artifacts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install WiX globally
+        run: |
+          cargo install cargo-wix
+
+      - name: Create a Windows installer
+        run: |
+          cargo wix
+
+      - name: Archive installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: |
+            target/wix/*.msi
