@@ -5,16 +5,14 @@
 Features:
 
 - Init mod project
-- Mod builder Python only
-- Available Windows / Linux / Macos (yes i know)
+- Python builder
 
-Comming:
+Next features:
 
-- Auto prepare dev environment
 - Mod builder AS3
 - WoT debbuger
 
-I will track the development [here](https://github.com/users/gabrielhamel/projects/5)
+Follow me on my discord server https://discord.gg/D4fSV59j
 
 ## Installation
 
@@ -30,18 +28,10 @@ Create a new mod directory
 
 ```bash
 wg-mod new
+
 ```
 
 Build a .wotmod file
 ```bash
 wg-mod build # In mod directory
-```
-
-## Development
-
-Run unit-tests in watch mode
-
-```bash
-cargo install cargo-watch
-cargo watch -x test
 ```
