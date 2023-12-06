@@ -95,7 +95,7 @@ impl GameSources {
         let repository = get_repository(&path, !already_exists)?;
         let mut remote = get_default_remote(&repository, !already_exists)?;
 
-        fetch(&mut remote)?;
+        // fetch(&mut remote)?; //FIXME get some internet connection noob
 
         let game_sources = GameSources {
             repository: get_repository(&path, false)?,

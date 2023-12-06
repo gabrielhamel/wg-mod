@@ -1861,7 +1861,7 @@ dependencies = [
 
 [[package]]
 name = "wg-mod"
-version = "0.7.3"
+version = "0.7.4"
 dependencies = [
  "clap",
  "config",

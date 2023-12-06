@@ -1,3 +1,4 @@
+use crate::sdk::as3::{self, AS3Error, AS3};
 use crate::sdk::conda;
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
@@ -14,12 +15,16 @@ pub enum ConfigsError {
 
     #[error("Unable to load Conda\n{0}")]
     CondaError(#[from] conda::CondaError),
+
+    #[error("Unable to load AS3\n{0}")]
+    AS3Error(#[from] as3::AS3Error),
 }
 
 pub struct Configs {
     pub wg_mod_home: PathBuf,
     pub game_sources: GameSources,
     pub conda_environment: CondaEnvironment,
+    pub as3: AS3,
 }
 
 fn get_tool_home() -> Result<PathBuf, ConfigsError> {
@@ -34,11 +39,13 @@ impl Configs {
         let wg_mod_home = get_tool_home()?;
         let game_sources = load_game_sources(&wg_mod_home)?;
         let conda_environment = load_conda_environment(&wg_mod_home)?;
+        let as3 = load_as3(&wg_mod_home)?;
 
         Ok(Configs {
             game_sources,
             wg_mod_home,
             conda_environment,
+            as3,
         })
     }
 }
@@ -75,4 +82,16 @@ fn get_conda(wg_mod_home: &PathBuf) -> Result<Conda, ConfigsError> {
     }
 
     Ok(conda)
+}
+
+fn load_as3(wg_mod_home: &PathBuf) -> Result<AS3, AS3Error> {
+    let as3_path = wg_mod_home.join("as3");
+    let as3 = AS3::from(as3_path);
+
+    if !as3.is_installed().expect("") {
+        println!("Installing action script SDK...");
+        as3.install().expect("");
+    }
+
+    Ok(as3)
 }
