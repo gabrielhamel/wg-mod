@@ -9,7 +9,8 @@ pub enum ConvertAbsolutePathError {
 pub fn convert_to_absolute_path(
     path: &PathBuf,
 ) -> Result<String, ConvertAbsolutePathError> {
-    let absolute_path = path.canonicalize().map_err(|_| {
+    let absolute_path = path.canonicalize().map_err(|e| {
+        eprintln!("{:?}", e);
         ConvertAbsolutePathError::ConvertAbsolutePathError(path.clone())
     })?;
 
