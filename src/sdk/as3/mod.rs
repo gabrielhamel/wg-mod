@@ -1,6 +1,7 @@
 mod install;
 
 use crate::sdk::as3::install::{install_flex_sdk, AS3InstallError};
+use std::fs;
 use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
@@ -24,7 +25,10 @@ impl From<PathBuf> for AS3 {
 
 impl AS3 {
     pub fn is_installed(&self) -> Result<bool, AS3Error> {
-        Ok(false)
+        match fs::metadata(&self.as3_path) {
+            | Ok(metadata) => Ok(metadata.is_dir()),
+            | Err(_) => Ok(false),
+        }
     }
 
     pub fn install(&self) -> Result<(), AS3Error> {

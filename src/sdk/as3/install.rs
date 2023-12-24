@@ -1,6 +1,10 @@
-use std::path::PathBuf;
-use crate::utils::convert_to_absolute_path::{convert_to_absolute_path, ConvertAbsolutePathError};
+use crate::utils::convert_to_absolute_path::ConvertAbsolutePathError;
 use crate::utils::downloader::{download_file, DownloadError};
+use std::fs;
+use std::fs::File;
+use std::path::PathBuf;
+use zip::result::ZipError;
+use zip::ZipArchive;
 
 #[derive(thiserror::Error, Debug)]
 pub enum AS3InstallError {
@@ -15,6 +19,15 @@ pub enum AS3InstallError {
 
     #[error("Provided path is invalid")]
     PathError,
+
+    #[error("Invalid file downloaded")]
+    InvalidArchive(std::io::Error),
+
+    #[error("Invalid Zip operation")]
+    InvalidZipOperation(#[from] ZipError),
+
+    #[error("Unable to delete archive")]
+    RemoveArchiveError(std::io::Error),
 }
 
 fn get_archive_url() -> Result<String, AS3InstallError> {
@@ -41,20 +54,30 @@ fn get_sdk_archive_destination(
         .to_string())
 }
 
-
-fn download_sdk_archive(destination: &PathBuf) -> Result<(), AS3InstallError> {
+fn download_sdk_archive(
+    destination: &PathBuf,
+) -> Result<PathBuf, AS3InstallError> {
     let archive_url = get_archive_url()?;
 
     let archive_name = String::from("as3-sdk.zip");
-    let archive_destination = get_sdk_archive_destination(destination, &archive_name)?;
+    let archive_destination =
+        get_sdk_archive_destination(destination, &archive_name)?;
 
     download_file(&archive_url, &archive_destination)?;
 
-    Ok(())
+    Ok(PathBuf::from(archive_destination))
 }
 
 pub fn install_flex_sdk(destination: &PathBuf) -> Result<(), AS3InstallError> {
-    let _ = download_sdk_archive(destination)?;
+    let archive_path = download_sdk_archive(destination)?;
+    let file =
+        File::open(&archive_path).map_err(AS3InstallError::InvalidArchive)?;
+
+    let mut archive = ZipArchive::new(file)?;
+    archive.extract(destination)?;
+
+    fs::remove_file(archive_path)
+        .map_err(AS3InstallError::RemoveArchiveError)?;
 
     Ok(())
 }
