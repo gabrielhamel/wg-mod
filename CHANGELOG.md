@@ -1,3 +1,14 @@
+# [0.8.0](https://github.com/gabrielhamel/wg-mod/compare/v0.7.4...v0.8.0) (2023-12-24)
+
+
+### Features
+
+* **as3:** AS3 module initialized with getter for download url ([1cc239f](https://github.com/gabrielhamel/wg-mod/commit/1cc239f1691b2b95b3d52fedb123b4294cc1ddca))
+* **as3:** Download zip file ([aee6e72](https://github.com/gabrielhamel/wg-mod/commit/aee6e72b0f6a4119d7c6127ad05396b42f73015a))
+* **as3:** Unzip as3 archive ([790becd](https://github.com/gabrielhamel/wg-mod/commit/790becd4c52dafebb73d5da9ae6b9e2aa0a6fcb1))
+
+
+
 ## [0.7.4](https://github.com/gabrielhamel/wg-mod/compare/v0.7.3...v0.7.4) (2023-11-14)
 
 
