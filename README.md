@@ -12,7 +12,7 @@ Next features:
 - Mod builder AS3
 - WoT debbuger
 
-Follow me on my discord server https://discord.gg/D4fSV59j
+Follow me on my discord server [https://discord.gg/XGzqS5Sb9G](https://discord.gg/XGzqS5Sb9G)
 
 ## Installation
 
