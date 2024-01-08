@@ -1,6 +1,6 @@
 [package]
 name = "wg-mod"
-version = "0.8.0"
+version = "0.8.1"
 edition = "2021"
 authors = ["Gabriel Hamel <gabriel.hamel.pro@gmail.com>"]
 repository = "https://github.com/gabrielhamel/wg-mod"
