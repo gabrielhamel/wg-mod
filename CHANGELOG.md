@@ -1,3 +1,12 @@
+# [0.9.0](https://github.com/gabrielhamel/wg-mod/compare/v0.8.1...v0.9.0) (2024-01-10)
+
+
+### Features
+
+* **configs:** Persist some settings in a json file ([48b2df4](https://github.com/gabrielhamel/wg-mod/commit/48b2df44a13c69e1b4b1bcf6f1b66cf95f9c20bd))
+
+
+
 ## [0.8.1](https://github.com/gabrielhamel/wg-mod/compare/v0.8.0...v0.8.1) (2024-01-08)
 
 
