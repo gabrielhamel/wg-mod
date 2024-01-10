@@ -1,8 +1,13 @@
+mod settings;
+
+use crate::config::settings::Settings;
 use crate::sdk::as3::{self, AS3Error, AS3};
 use crate::sdk::conda;
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
 use crate::sdk::game_sources::{GameSources, GameSourcesError};
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
@@ -18,6 +23,12 @@ pub enum ConfigsError {
 
     #[error("Unable to load AS3\n{0}")]
     AS3Error(#[from] as3::AS3Error),
+
+    #[error("Unable to load settings\n{0}")]
+    SettingsError(String),
+
+    #[error("Invalid json\n{0}")]
+    SettingsParseError(#[from] serde_json::Error),
 }
 
 pub struct Configs {
@@ -25,6 +36,7 @@ pub struct Configs {
     pub game_sources: GameSources,
     pub conda_environment: CondaEnvironment,
     pub as3: AS3,
+    pub settings: Settings,
 }
 
 fn get_tool_home() -> Result<PathBuf, ConfigsError> {
@@ -40,14 +52,63 @@ impl Configs {
         let game_sources = load_game_sources(&wg_mod_home)?;
         let conda_environment = load_conda_environment(&wg_mod_home)?;
         let as3 = load_as3(&wg_mod_home)?;
+        let settings = load_settings(&wg_mod_home)?;
 
         Ok(Configs {
             game_sources,
             wg_mod_home,
             conda_environment,
             as3,
+            settings,
         })
     }
+
+    pub fn save_settings(&self) -> Result<(), ConfigsError> {
+        let settings_file = self.wg_mod_home.join("settings.json");
+        let file = File::create(settings_file).map_err(|e| {
+            ConfigsError::SettingsError(format!(
+                "Unable to open settings file: {e}"
+            ))
+        })?;
+
+        serde_json::to_writer_pretty(file, &self.settings)?;
+
+        Ok(())
+    }
+}
+
+fn create_default_settings_file(path: &PathBuf) -> Result<(), ConfigsError> {
+    let mut file = File::create(path).map_err(|e| {
+        ConfigsError::SettingsError(format!(
+            "Unable to create settings file: {e}"
+        ))
+    })?;
+
+    file.write("{}".as_ref()).map_err(|e| {
+        ConfigsError::SettingsError(format!(
+            "Unable to write in settings file: {e}"
+        ))
+    })?;
+
+    Ok(())
+}
+
+fn load_settings(wg_mod_home: &PathBuf) -> Result<Settings, ConfigsError> {
+    let settings_file = wg_mod_home.join("settings.json");
+
+    if !settings_file.exists() {
+        create_default_settings_file(&settings_file)?
+    };
+
+    let file = File::open(&settings_file).map_err(|e| {
+        ConfigsError::SettingsError(format!(
+            "Unable to open settings file: {e}"
+        ))
+    })?;
+
+    let settings: Settings = serde_json::from_reader(file)?;
+
+    Ok(settings)
 }
 
 fn load_game_sources(
