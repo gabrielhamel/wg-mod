@@ -8,7 +8,7 @@ mod sdk;
 mod utils;
 
 fn main() {
-    Configs::load().expect("");
+    Configs::load().expect("Unable to load wg-mod configs");
 
     match cli::run() {
         | Err(err) => eprintln!("{}", err.to_string()),
