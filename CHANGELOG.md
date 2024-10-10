@@ -1,3 +1,14 @@
+## [0.9.1](https://github.com/gabrielhamel/wg-mod/compare/v0.9.0...v0.9.1) (2024-10-10)
+
+
+### Bug Fixes
+
+* **download:** Stream download into a file instead of reading the whole response bytes ([63d6e70](https://github.com/gabrielhamel/wg-mod/commit/63d6e7055dc53319924d40d3e147a2233978017e))
+* **pycharm:** List python modules Windows path style fix ([e0e42fe](https://github.com/gabrielhamel/wg-mod/commit/e0e42feb8d79bed1fabe5b259096cb040b5a42be))
+* **pycharm:** Path are now shown in OS format ([6754a50](https://github.com/gabrielhamel/wg-mod/commit/6754a5045507ebf8cbf63a0f532585aaab4a1031))
+
+
+
 # [0.9.0](https://github.com/gabrielhamel/wg-mod/compare/v0.8.1...v0.9.0) (2024-01-10)
 
 
