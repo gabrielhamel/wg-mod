@@ -1,3 +1,4 @@
+use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
 use fs_extra::dir::get_dir_content;
 use git2::{
     Branch, BranchType, FetchOptions, Remote, RemoteCallbacks, Repository,
@@ -170,13 +171,24 @@ impl GameSources {
         let python_sources_path = sources_path.join("sources/res");
         let directory_content = get_dir_content(python_sources_path)?;
         let every_folders = directory_content.directories;
+        let cleaned_paths = every_folders
+            .iter()
+            .map(|p| {
+                convert_to_absolute_path(&PathBuf::from(p))
+                    .map_err(|_| GameSourcesError::PathError)
+            })
+            .collect::<Result<Vec<String>, GameSourcesError>>()?;
+
         let is_root_modules = |folder: &String| {
             folder.ends_with(&format!("scripts{}common", MAIN_SEPARATOR))
                 || folder.ends_with(&format!("scripts{}client", MAIN_SEPARATOR))
-                || folder.ends_with(&format!("scripts{}client_common", MAIN_SEPARATOR))
+                || folder.ends_with(&format!(
+                    "scripts{}client_common",
+                    MAIN_SEPARATOR
+                ))
         };
 
-        Ok(every_folders
+        Ok(cleaned_paths
             .iter()
             .filter_map(|folder| {
                 if is_root_modules(folder) {
