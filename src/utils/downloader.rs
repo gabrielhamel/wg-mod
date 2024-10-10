@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::Write;
+use std::io;
 
 #[derive(thiserror::Error, Debug)]
 pub enum DownloadError {
@@ -7,15 +7,13 @@ pub enum DownloadError {
     FetchError(#[from] reqwest::Error),
 
     #[error("Error occurred during file writing")]
-    FileWriteError(#[from] std::io::Error),
+    FileWriteError(#[from] io::Error),
 }
 
 pub fn download_file(url: &str, path: &str) -> Result<(), DownloadError> {
-    let http_response = reqwest::blocking::get(url)?;
-    let bytes = http_response.bytes()?;
-
+    let mut http_response = reqwest::blocking::get(url)?;
     let mut file = File::create(path)?;
-    file.write_all(&bytes)?;
 
+    io::copy(&mut http_response, &mut file)?;
     Ok(())
 }
