@@ -6,7 +6,7 @@ use inquire::Select;
 use std::fs::create_dir_all;
 use std::io;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{PathBuf, MAIN_SEPARATOR};
 
 #[derive(thiserror::Error, Debug)]
 pub enum GameSourcesError {
@@ -171,9 +171,9 @@ impl GameSources {
         let directory_content = get_dir_content(python_sources_path)?;
         let every_folders = directory_content.directories;
         let is_root_modules = |folder: &String| {
-            folder.ends_with("scripts/common")
-                || folder.ends_with("scripts/client")
-                || folder.ends_with("scripts/client_common")
+            folder.ends_with(&format!("scripts{}common", MAIN_SEPARATOR))
+                || folder.ends_with(&format!("scripts{}client", MAIN_SEPARATOR))
+                || folder.ends_with(&format!("scripts{}client_common", MAIN_SEPARATOR))
         };
 
         Ok(every_folders
