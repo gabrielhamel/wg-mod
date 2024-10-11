@@ -7,7 +7,7 @@ use crate::utils::convert_to_absolute_path::{
 use std::path::PathBuf;
 use std::{fs, io};
 use zip::result::ZipError;
-use zip::write::FileOptions;
+use zip::write::SimpleFileOptions;
 use zip::CompressionMethod;
 use zip_extensions::*;
 
@@ -87,12 +87,13 @@ impl ModBuilder {
 
     fn make_archive(&self) -> Result<PathBuf, ModBuilderError> {
         let archive_file = self.target_path.join("result.wotmod");
+        let compression_options = SimpleFileOptions::default()
+                .compression_method(CompressionMethod::Stored);
 
         zip_create_from_directory_with_options(
             &archive_file,
             &self.build_path,
-            FileOptions::default()
-                .compression_method(CompressionMethod::Stored),
+            |_| compression_options
         )?;
 
         Ok(archive_file)
