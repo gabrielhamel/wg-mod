@@ -1,3 +1,7 @@
+## [0.9.3](https://github.com/gabrielhamel/wg-mod/compare/v0.9.2...v0.9.3) (2024-10-11)
+
+
+
 ## [0.9.2](https://github.com/gabrielhamel/wg-mod/compare/v0.9.1...v0.9.2) (2024-10-11)
 
 
