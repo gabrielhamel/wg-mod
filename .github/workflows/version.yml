@@ -14,12 +14,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.github_token }}
 
       - name: Bump package version
-        uses: TriPSs/conventional-changelog-action@v4
+        uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.github_token }}
           tag-prefix: 'v'
@@ -31,5 +31,5 @@ jobs:
 
           # Commit details
           git-message: 'chore(release): {version}'
-          git-user-name: 'gabrielhamel'
+          git-user-name: 'Gabriel Hamel'
           git-user-email: 'gabriel.hamel.pro@gmail.com'

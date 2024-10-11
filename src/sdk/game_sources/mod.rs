@@ -160,6 +160,30 @@ impl GameSources {
         Ok(())
     }
 
+    fn list_directory_paths(
+        &self, path: &PathBuf,
+    ) -> Result<Vec<String>, GameSourcesError> {
+        let directory_content = get_dir_content(path)?;
+        let folders = directory_content.directories;
+
+        let cleaned_path = folders
+            .iter()
+            .map(|p| {
+                convert_to_absolute_path(&PathBuf::from(p))
+                    .map_err(|_| GameSourcesError::PathError)
+            })
+            .collect::<Result<Vec<String>, GameSourcesError>>()?;
+
+        Ok(cleaned_path)
+    }
+
+    fn is_game_python_root_module(&self, folder: &String) -> bool {
+        folder.ends_with(&format!("scripts{}common", MAIN_SEPARATOR))
+            || folder.ends_with(&format!("scripts{}client", MAIN_SEPARATOR))
+            || folder
+                .ends_with(&format!("scripts{}client_common", MAIN_SEPARATOR))
+    }
+
     pub fn list_python_root_modules(
         &self,
     ) -> Result<Vec<String>, GameSourcesError> {
@@ -169,29 +193,12 @@ impl GameSources {
             .parent()
             .ok_or(GameSourcesError::PathError)?;
         let python_sources_path = sources_path.join("sources/res");
-        let directory_content = get_dir_content(python_sources_path)?;
-        let every_folders = directory_content.directories;
-        let cleaned_paths = every_folders
-            .iter()
-            .map(|p| {
-                convert_to_absolute_path(&PathBuf::from(p))
-                    .map_err(|_| GameSourcesError::PathError)
-            })
-            .collect::<Result<Vec<String>, GameSourcesError>>()?;
+        let sub_paths = self.list_directory_paths(&python_sources_path)?;
 
-        let is_root_modules = |folder: &String| {
-            folder.ends_with(&format!("scripts{}common", MAIN_SEPARATOR))
-                || folder.ends_with(&format!("scripts{}client", MAIN_SEPARATOR))
-                || folder.ends_with(&format!(
-                    "scripts{}client_common",
-                    MAIN_SEPARATOR
-                ))
-        };
-
-        Ok(cleaned_paths
+        Ok(sub_paths
             .iter()
             .filter_map(|folder| {
-                if is_root_modules(folder) {
+                if self.is_game_python_root_module(folder) {
                     Some(folder.clone())
                 } else {
                     None
