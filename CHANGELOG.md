@@ -1,3 +1,12 @@
+# [0.10.0](https://github.com/gabrielhamel/wg-mod/compare/v0.9.3...v0.10.0) (2024-10-14)
+
+
+### Features
+
+* Add ui working tree creation (command new) ([f0e020f](https://github.com/gabrielhamel/wg-mod/commit/f0e020f4ba69083e9f68e14e43deafa4f85bb900))
+
+
+
 ## [0.9.3](https://github.com/gabrielhamel/wg-mod/compare/v0.9.2...v0.9.3) (2024-10-11)
 
 
