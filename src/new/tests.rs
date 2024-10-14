@@ -44,5 +44,32 @@ def fini():
 "
     );
 
+    let ui_entrypoint_content =
+        read_to_string(mod_path.join("ui/better_matchmaking.as")).unwrap();
+    assert_eq!(
+        ui_entrypoint_content,
+        "package{
+        class BetterMatchmaking {}
+        }"
+    );
+
+    let ui_config_content =
+        read_to_string(mod_path.join("ui/asconfig.json")).unwrap();
+    assert_eq!(
+        ui_config_content,
+        "{
+  \"config\": \"flex\",
+  \"type\": \"lib\",
+  \"compilerOptions\": {
+    \"output\": \".\",
+    \"targets\": [
+      \"SWF\"
+    ],
+    \"source-map\": true
+  },
+  \"mainClass\": \"BetterMatchmaking\"\
+  }"
+    );
+
     tmp_dir.close().unwrap();
 }

@@ -88,12 +88,12 @@ impl ModBuilder {
     fn make_archive(&self) -> Result<PathBuf, ModBuilderError> {
         let archive_file = self.target_path.join("result.wotmod");
         let compression_options = SimpleFileOptions::default()
-                .compression_method(CompressionMethod::Stored);
+            .compression_method(CompressionMethod::Stored);
 
         zip_create_from_directory_with_options(
             &archive_file,
             &self.build_path,
-            |_| compression_options
+            |_| compression_options,
         )?;
 
         Ok(archive_file)

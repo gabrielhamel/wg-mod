@@ -63,6 +63,45 @@ fn template_git_ignore(parent_dir: &PathBuf) -> Result<(), TemplateError> {
     Ok(())
 }
 
+fn template_ui_entrypoint(
+    args: &NewArgs, parent_dir: &PathBuf,
+) -> Result<(), TemplateError> {
+    write_template(
+        parent_dir,
+        &format!("{}.as", args.name.to_case(Case::Snake)),
+        "package{
+        class {{class_name}} {}
+        }",
+        &json!({
+            "class_name": args.name.to_case(Case::Pascal),
+        }),
+    )
+}
+
+fn template_ui_config(
+    args: &NewArgs, parent_dir: &PathBuf,
+) -> Result<(), TemplateError> {
+    write_template(
+        parent_dir,
+        "asconfig.json",
+        "{
+  \"config\": \"flex\",
+  \"type\": \"lib\",
+  \"compilerOptions\": {
+    \"output\": \".\",
+    \"targets\": [
+      \"SWF\"
+    ],
+    \"source-map\": true
+  },
+  \"mainClass\": \"{{main_class_name}}\"\
+  }",
+        &json!({
+            "main_class_name": args.name.to_case(Case::Pascal),
+        }),
+    )
+}
+
 fn init_git_repository(directory: &PathBuf) -> Result<(), TemplateError> {
     template_git_ignore(directory)?;
 
@@ -80,6 +119,10 @@ pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
 
     let scripts_entrypoint_path = &root_path.join("scripts");
     template_script_entrypoint(&args, &scripts_entrypoint_path)?;
+
+    let ui_entrypoint_path = &root_path.join("ui");
+    template_ui_entrypoint(&args, &ui_entrypoint_path)?;
+    template_ui_config(&args, &ui_entrypoint_path)?;
 
     init_git_repository(&root_path)?;
 
