@@ -1,3 +1,12 @@
+## [0.10.1](https://github.com/gabrielhamel/wg-mod/compare/v0.10.0...v0.10.1) (2024-10-14)
+
+
+### Bug Fixes
+
+* Lint in AS template ([c06d006](https://github.com/gabrielhamel/wg-mod/commit/c06d006a295dc8817eeb585ac7e5b6eab0d97d51))
+
+
+
 # [0.10.0](https://github.com/gabrielhamel/wg-mod/compare/v0.9.3...v0.10.0) (2024-10-14)
 
 
