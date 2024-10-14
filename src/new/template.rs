@@ -69,9 +69,11 @@ fn template_ui_entrypoint(
     write_template(
         parent_dir,
         &format!("{}.as", args.name.to_case(Case::Snake)),
-        "package{
-        class {{class_name}} {}
-        }",
+        "package {
+  class {{class_name}} {
+
+  }
+}",
         &json!({
             "class_name": args.name.to_case(Case::Pascal),
         }),
@@ -94,8 +96,8 @@ fn template_ui_config(
     ],
     \"source-map\": true
   },
-  \"mainClass\": \"{{main_class_name}}\"\
-  }",
+  \"mainClass\": \"{{main_class_name}}\"
+}",
         &json!({
             "main_class_name": args.name.to_case(Case::Pascal),
         }),
