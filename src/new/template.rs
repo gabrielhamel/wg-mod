@@ -16,7 +16,8 @@ fn template_meta(
     <version>{{version}}</version>
     <name>{{name}}</name>
     <description>{{description}}</description>
-</root>",
+</root>
+",
         &json!({
             "package_name": args.package_name,
             "version": args.version,
@@ -66,16 +67,23 @@ fn template_git_ignore(parent_dir: &PathBuf) -> Result<(), TemplateError> {
 fn template_ui_entrypoint(
     args: &NewArgs, parent_dir: &PathBuf,
 ) -> Result<(), TemplateError> {
+    let tokens = args.package_name.split(".").collect::<Vec<_>>();
+    let package_name_without_suffix = tokens[..tokens.len() - 1].join(".");
+
     write_template(
         parent_dir,
-        &format!("{}.as", args.name.to_case(Case::Snake)),
-        "package {
-  class {{class_name}} {
+        &format!("{}.as", args.name.to_case(Case::Pascal)),
+        "package {{package_name}} {
+  import net.wg.infrastructure.base.AbstractView;
+
+  class {{class_name}} extends AbstractView {
 
   }
-}",
+}
+",
         &json!({
             "class_name": args.name.to_case(Case::Pascal),
+            "package_name": package_name_without_suffix
         }),
     )
 }
@@ -97,7 +105,8 @@ fn template_ui_config(
     \"source-map\": true
   },
   \"mainClass\": \"{{main_class_name}}\"
-}",
+}
+",
         &json!({
             "main_class_name": args.name.to_case(Case::Pascal),
         }),
@@ -122,9 +131,15 @@ pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
     let scripts_entrypoint_path = &root_path.join("scripts");
     template_script_entrypoint(&args, &scripts_entrypoint_path)?;
 
-    let ui_entrypoint_path = &root_path.join("ui");
-    template_ui_entrypoint(&args, &ui_entrypoint_path)?;
-    template_ui_config(&args, &ui_entrypoint_path)?;
+    let ui_path = &root_path.join("ui");
+    let mut ui_sources_path = ui_path.join("src");
+    let tokens = args.package_name.split(".").collect::<Vec<_>>();
+    for token in tokens[..tokens.len() - 1].iter() {
+        ui_sources_path = ui_sources_path.join(token);
+    }
+
+    template_ui_entrypoint(&args, &ui_sources_path)?;
+    template_ui_config(&args, &ui_path)?;
 
     init_git_repository(&root_path)?;
 
