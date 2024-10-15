@@ -1,3 +1,12 @@
+## [0.10.2](https://github.com/gabrielhamel/wg-mod/compare/v0.10.1...v0.10.2) (2024-10-15)
+
+
+### Bug Fixes
+
+* ui folder tree with package name ([15c4402](https://github.com/gabrielhamel/wg-mod/commit/15c44027534858ea33d26b071ff6e80776d53840))
+
+
+
 ## [0.10.1](https://github.com/gabrielhamel/wg-mod/compare/v0.10.0...v0.10.1) (2024-10-14)
 
 
