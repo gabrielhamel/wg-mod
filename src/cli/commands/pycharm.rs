@@ -16,7 +16,7 @@ pub struct PycharmCommand;
 
 fn pycharm() -> Result<(), PycharmCommandError> {
     let config = Configs::load()?;
-    let python_root_modules = config.game_sources.list_python_root_modules()?;
+    // let python_root_modules = config.game_sources.list_python_root_modules()?;
 
     println!("Resolve WoT imports:
 1. Go in your PyCharm project settings
@@ -25,9 +25,9 @@ fn pycharm() -> Result<(), PycharmCommandError> {
 4. Select 'wg-mod' and click on the small directories icon 'Show Interpreter Paths'
 5. Add these following paths by clicking the button '+'
 ");
-    for module in python_root_modules {
-        println!(" - {module}");
-    }
+    // for module in python_root_modules {
+    //     println!(" - {module}");
+    // }
 
     Ok(())
 }

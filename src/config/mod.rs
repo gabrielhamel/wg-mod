@@ -9,6 +9,10 @@ use crate::sdk::{conda, Installable};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use crate::sdk::node::{Node};
+use crate::sdk::nvm::linuxOrMacOS::LinuxOrMacOsNVM;
+use crate::sdk::nvm::{ NVM};
+use crate::sdk::nvm::windows::WindowsNVM;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ConfigsError {
@@ -36,6 +40,8 @@ pub struct Configs {
     pub game_sources: GameSources,
     pub conda_environment: CondaEnvironment,
     pub as3: AS3,
+    pub nvm: Box<dyn NVM>,
+    pub node: Node,
     pub settings: Settings,
 }
 
@@ -52,6 +58,8 @@ impl Configs {
         let game_sources = load_game_sources(&wg_mod_home)?;
         let conda_environment = load_conda_environment(&wg_mod_home)?;
         let as3 = load_as3(&wg_mod_home)?;
+        let nvm = load_nvm(&wg_mod_home)?;
+        let node = load_node(&wg_mod_home, &nvm)?;
         let settings = load_settings(&wg_mod_home)?;
 
         Ok(Configs {
@@ -59,6 +67,8 @@ impl Configs {
             wg_mod_home,
             conda_environment,
             as3,
+            nvm,
+            node,
             settings,
         })
     }
@@ -125,10 +135,10 @@ fn load_conda_environment(
 ) -> Result<CondaEnvironment, ConfigsError> {
     let conda = get_conda(wg_mod_home)?;
 
-    if !conda.has_environment("wg-mod") {
-        println!("Create conda env...");
-        conda.create_environment("wg-mod", "2")?;
-    }
+    // if !conda.has_environment("wg-mod") {
+    //     println!("Create conda env...");
+    //     conda.create_environment("wg-mod", "2")?;
+    // }
 
     Ok(conda.get_environment("wg-mod"))
 }
@@ -153,6 +163,27 @@ fn load_as3(wg_mod_home: &PathBuf) -> Result<AS3, AS3Error> {
         println!("Installing action script SDK...");
         as3.install().expect("");
     }
-
     Ok(as3)
+}
+
+fn load_nvm(wg_mod_home: &PathBuf) -> Result<Box<dyn NVM>, ConfigsError> {
+    let nvm_path = wg_mod_home.join("nvm");
+    let nvm : Box<dyn NVM> = if cfg!(target_os = "windows") {
+        Box::new(WindowsNVM::from(nvm_path))
+    }else {
+        Box::new(LinuxOrMacOsNVM::from(nvm_path))
+    };
+
+    nvm.install().expect("");
+
+    Ok(nvm)
+}
+
+fn load_node(wg_mod_home: &PathBuf, nvm: &Box<dyn NVM>) -> Result<Node, ConfigsError> {
+    let node_path = wg_mod_home.join("node");
+    let node = Node::new(node_path);
+
+    node.install(nvm).expect("");
+
+    Ok(node)
 }
