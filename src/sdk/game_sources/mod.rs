@@ -94,17 +94,17 @@ impl GameSources {
         let already_exists = path.exists();
 
         let repository = get_repository(&path, !already_exists)?;
-        // let mut remote = get_default_remote(&repository, !already_exists)?;
+        let mut remote = get_default_remote(&repository, !already_exists)?;
 
-        // fetch(&mut remote)?;
+        fetch(&mut remote)?;
 
         let game_sources = GameSources {
             repository: get_repository(&path, false)?,
         };
 
-        // if !already_exists {
-        //     game_sources.prompt_channel()?;
-        // }
+        if !already_exists {
+            game_sources.prompt_channel()?;
+        }
 
         Ok(game_sources)
     }

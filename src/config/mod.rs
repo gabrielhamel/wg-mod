@@ -135,10 +135,10 @@ fn load_conda_environment(
 ) -> Result<CondaEnvironment, ConfigsError> {
     let conda = get_conda(wg_mod_home)?;
 
-    // if !conda.has_environment("wg-mod") {
-    //     println!("Create conda env...");
-    //     conda.create_environment("wg-mod", "2")?;
-    // }
+    if !conda.has_environment("wg-mod") {
+        println!("Create conda env...");
+        conda.create_environment("wg-mod", "2")?;
+    }
 
     Ok(conda.get_environment("wg-mod"))
 }
