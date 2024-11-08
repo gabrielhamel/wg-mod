@@ -1,3 +1,12 @@
+# [0.11.0](https://github.com/gabrielhamel/wg-mod/compare/v0.10.2...v0.11.0) (2024-11-08)
+
+
+### Features
+
+* Introduce 'Installable' trait and implementing it on Conda ([aea7f1a](https://github.com/gabrielhamel/wg-mod/commit/aea7f1a61bc15dd918d2dd6195e41596534147d6))
+
+
+
 ## [0.10.2](https://github.com/gabrielhamel/wg-mod/compare/v0.10.1...v0.10.2) (2024-10-15)
 
 
