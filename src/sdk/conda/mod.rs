@@ -3,6 +3,7 @@ mod install;
 
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::install::install_conda;
+use crate::sdk::{InstallResult, Installable};
 use crate::utils::downloader::DownloadError;
 use std::{
     fs,
@@ -24,9 +25,6 @@ pub enum CondaError {
 
     #[error("Conda isn't installed")]
     NotInstalledError,
-
-    #[error("Conda is already installed")]
-    CondaAlreadyInstalled,
 
     #[error("Conda install error")]
     InstallError(std::io::Error),
@@ -63,7 +61,7 @@ impl Conda {
     }
 
     fn command(&self, args: Vec<&str>) -> Result<(String, String), CondaError> {
-        if !self.is_installed()? {
+        if !self.is_installed() {
             return Err(CondaError::NotInstalledError);
         }
 
@@ -82,13 +80,6 @@ impl Conda {
         let stdout = std::str::from_utf8(&output.stdout)?.to_string();
         let stderr = std::str::from_utf8(&output.stderr)?.to_string();
         Ok((stdout, stderr))
-    }
-
-    pub fn is_installed(&self) -> Result<bool, CondaError> {
-        match fs::metadata(self.get_executable_path()) {
-            | Ok(metadata) => Ok(metadata.is_file()),
-            | Err(_) => Ok(false),
-        }
     }
 
     pub fn create_environment(
@@ -121,12 +112,21 @@ impl Conda {
 
         environment_path.exists()
     }
+}
 
-    pub fn install(&self) -> Result<(), CondaError> {
-        if self.is_installed()? {
-            Err(CondaError::CondaAlreadyInstalled)
+impl Installable for Conda {
+    fn is_installed(&self) -> bool {
+        match fs::metadata(self.get_executable_path()) {
+            | Ok(metadata) => metadata.is_file(),
+            | Err(_) => false,
+        }
+    }
+
+    fn install(&self) -> InstallResult {
+        if self.is_installed() {
+            Err("Conda is already installed".into())
         } else {
-            install_conda(&self.conda_path)
+            install_conda(&self.conda_path).map_err(|error| error.to_string())
         }
     }
 }

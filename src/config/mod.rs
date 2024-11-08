@@ -2,10 +2,10 @@ mod settings;
 
 use crate::config::settings::Settings;
 use crate::sdk::as3::{self, AS3Error, AS3};
-use crate::sdk::conda;
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
 use crate::sdk::game_sources::{GameSources, GameSourcesError};
+use crate::sdk::{conda, Installable};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -137,7 +137,7 @@ fn get_conda(wg_mod_home: &PathBuf) -> Result<Conda, ConfigsError> {
     let conda_path = wg_mod_home.join("conda");
     let conda = Conda::from(conda_path);
 
-    if !conda.is_installed().expect("") {
+    if !conda.is_installed() {
         println!("Installing conda...");
         conda.install().expect("");
     }
