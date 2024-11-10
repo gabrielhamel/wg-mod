@@ -1,3 +1,12 @@
+# [0.12.0](https://github.com/gabrielhamel/wg-mod/compare/v0.11.0...v0.12.0) (2024-11-10)
+
+
+### Features
+
+* Add command to switch game source dev channel ([d2f12a2](https://github.com/gabrielhamel/wg-mod/commit/d2f12a220b4038889889db74d64d30a477b18d9c))
+
+
+
 # [0.11.0](https://github.com/gabrielhamel/wg-mod/compare/v0.10.2...v0.11.0) (2024-11-08)
 
 
