@@ -1,13 +1,15 @@
 use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
 use fs_extra::dir::get_dir_content;
 use git2::{
-    Branch, BranchType, FetchOptions, Remote, RemoteCallbacks, Repository,
+    Branch, BranchType, FetchOptions, Reference, Remote, RemoteCallbacks,
+    Repository,
 };
 use inquire::Select;
 use std::fs::create_dir_all;
 use std::io;
 use std::io::Write;
 use std::path::{PathBuf, MAIN_SEPARATOR};
+use std::sync::mpsc::channel;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GameSourcesError {
@@ -130,7 +132,7 @@ impl GameSources {
         Ok(branches)
     }
 
-    fn prompt_channel(&self) -> Result<(), GameSourcesError> {
+    pub fn prompt_channel(&self) -> Result<(), GameSourcesError> {
         let channels_available = self.list_channels()?;
         let channel_selected = Select::new(
             "Select a World of Tanks development channel:",
@@ -158,6 +160,29 @@ impl GameSources {
         }?;
 
         Ok(())
+    }
+
+    pub fn get_channel(&self) -> Result<String, GameSourcesError> {
+        let current_commit = self.repository.head()?.peel_to_commit()?;
+        let references = self.repository.references()?;
+
+        for reference_pack in references {
+            if let Ok(reference) = reference_pack {
+                if let Some(target) = reference.target() {
+                    if target == current_commit.id()
+                        && reference.name().is_some()
+                    {
+                        return Ok(reference
+                            .name()
+                            .ok_or(GameSourcesError::GitBranchError)?
+                            .to_string()
+                            .replace("refs/remotes/origin/", ""));
+                    }
+                }
+            }
+        }
+
+        Err(GameSourcesError::GitBranchError)
     }
 
     fn list_directory_paths(

@@ -1,4 +1,5 @@
 use crate::cli::commands::build::BuildCommand;
+use crate::cli::commands::channel::ChannelCommand;
 use crate::cli::commands::new::NewCommand;
 use crate::cli::commands::pycharm::PycharmCommand;
 use clap::{ArgMatches, Command};
@@ -30,4 +31,5 @@ pub fn command() -> Command {
         .subcommand(NewCommand::command())
         .subcommand(BuildCommand::command())
         .subcommand(PycharmCommand::command())
+        .subcommand(ChannelCommand::command())
 }
