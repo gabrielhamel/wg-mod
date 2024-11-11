@@ -1,11 +1,20 @@
 use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
-enum PathBufToStringError {
-    #[error("Convertion failed")]
-    ConvertionFailed,
+pub enum PathBufToStringError {
+    #[error("Conversion failed")]
+    ConversionFailed,
 }
 
-pub fn convert_pathbuf_to_string(path: &PathBuf) -> &str {
-    path.to_str().expect("")
+pub trait Stringify {
+    fn to_string(&self) -> Result<String, PathBufToStringError>;
+}
+
+impl Stringify for PathBuf {
+    fn to_string(&self) -> Result<String, PathBufToStringError> {
+        Ok(self
+            .to_str()
+            .ok_or(PathBufToStringError::ConversionFailed)?
+            .to_string())
+    }
 }

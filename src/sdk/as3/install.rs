@@ -34,6 +34,7 @@ fn get_archive_url() -> Result<String, AS3InstallError> {
     let os = match std::env::consts::OS {
         | "macos" => Ok("macos"),
         | "windows" => Ok("windows"),
+        | "linux" => Ok("windows"), // FIXME -> incompatible sdk for linux
         | _ => Err(AS3InstallError::PlatformNotSupportedError),
     }?;
 

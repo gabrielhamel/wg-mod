@@ -5,14 +5,13 @@ use crate::sdk::as3::{self, AS3Error, AS3};
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
 use crate::sdk::game_sources::{GameSources, GameSourcesError};
+use crate::sdk::nvm::linux_or_mac_os::LinuxOrMacOsNVM;
+use crate::sdk::nvm::windows::WindowsNVM;
+use crate::sdk::nvm::NVM;
 use crate::sdk::{conda, Installable};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use crate::sdk::node::{Node};
-use crate::sdk::nvm::linuxOrMacOS::LinuxOrMacOsNVM;
-use crate::sdk::nvm::{ NVM};
-use crate::sdk::nvm::windows::WindowsNVM;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ConfigsError {
@@ -41,7 +40,6 @@ pub struct Configs {
     pub conda_environment: CondaEnvironment,
     pub as3: AS3,
     pub nvm: Box<dyn NVM>,
-    pub node: Node,
     pub settings: Settings,
 }
 
@@ -59,7 +57,6 @@ impl Configs {
         let conda_environment = load_conda_environment(&wg_mod_home)?;
         let as3 = load_as3(&wg_mod_home)?;
         let nvm = load_nvm(&wg_mod_home)?;
-        let node = load_node(&wg_mod_home, &nvm)?;
         let settings = load_settings(&wg_mod_home)?;
 
         Ok(Configs {
@@ -68,7 +65,6 @@ impl Configs {
             conda_environment,
             as3,
             nvm,
-            node,
             settings,
         })
     }
@@ -149,7 +145,7 @@ fn get_conda(wg_mod_home: &PathBuf) -> Result<Conda, ConfigsError> {
 
     if !conda.is_installed() {
         println!("Installing conda...");
-        conda.install().expect("");
+        conda.install().expect("failed conda installation");
     }
 
     Ok(conda)
@@ -161,29 +157,21 @@ fn load_as3(wg_mod_home: &PathBuf) -> Result<AS3, AS3Error> {
 
     if !as3.is_installed() {
         println!("Installing action script SDK...");
-        as3.install().expect("");
+        as3.install().expect("failed s3 installation");
     }
     Ok(as3)
 }
 
 fn load_nvm(wg_mod_home: &PathBuf) -> Result<Box<dyn NVM>, ConfigsError> {
     let nvm_path = wg_mod_home.join("nvm");
-    let nvm : Box<dyn NVM> = if cfg!(target_os = "windows") {
+    let nvm: Box<dyn NVM> = if cfg!(target_os = "windows") {
         Box::new(WindowsNVM::from(nvm_path))
-    }else {
+    } else {
         Box::new(LinuxOrMacOsNVM::from(nvm_path))
     };
 
-    nvm.install().expect("");
+    println!("Install nvm ...");
+    nvm.install().expect("failed nvm installation");
 
     Ok(nvm)
-}
-
-fn load_node(wg_mod_home: &PathBuf, nvm: &Box<dyn NVM>) -> Result<Node, ConfigsError> {
-    let node_path = wg_mod_home.join("node");
-    let node = Node::new(node_path);
-
-    node.install(nvm).expect("");
-
-    Ok(node)
 }
