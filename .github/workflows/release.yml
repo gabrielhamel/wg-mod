@@ -2,7 +2,7 @@ name: Release
 
 on:
   release:
-    types: [published]
+    types: [ published ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,23 +19,3 @@ jobs:
 
       - name: Publish the crate
         run: cargo publish
-
-  artifacts:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install WiX globally
-        run: |
-          cargo install cargo-wix
-
-      - name: Create a Windows installer
-        run: |
-          cargo wix
-
-      - name: Archive installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-installer
-          path: |
-            target/wix/*.msi
