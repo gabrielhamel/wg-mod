@@ -28,7 +28,8 @@ fn mod_files() {
     <version>1.0.2</version>
     <name>Better matchmaking</name>
     <description>Best mod ever</description>
-</root>"
+</root>
+"
     );
 
     let script_entrypoint_content =
@@ -44,13 +45,20 @@ def fini():
 "
     );
 
-    let ui_entrypoint_content =
-        read_to_string(mod_path.join("ui/better_matchmaking.as")).unwrap();
+    let ui_entrypoint_content = read_to_string(
+        mod_path.join("ui/src/fr/gabouchet/BetterMatchmaking.as"),
+    )
+    .unwrap();
     assert_eq!(
         ui_entrypoint_content,
-        "package{
-        class BetterMatchmaking {}
-        }"
+        "package fr.gabouchet {
+  import net.wg.infrastructure.base.AbstractView;
+
+  class BetterMatchmaking extends AbstractView {
+
+  }
+}
+"
     );
 
     let ui_config_content =
@@ -67,8 +75,9 @@ def fini():
     ],
     \"source-map\": true
   },
-  \"mainClass\": \"BetterMatchmaking\"\
-  }"
+  \"mainClass\": \"BetterMatchmaking\"
+}
+"
     );
 
     tmp_dir.close().unwrap();
