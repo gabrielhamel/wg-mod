@@ -19,6 +19,10 @@ impl NVM for WindowsNVM {
         todo!()
     }
 
+    fn is_installed(&self) -> bool {
+        todo!()
+    }
+
     fn install_node(&self) -> Result<(), NVMError> {
         todo!()
     }

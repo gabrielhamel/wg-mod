@@ -164,14 +164,17 @@ fn load_as3(wg_mod_home: &PathBuf) -> Result<AS3, AS3Error> {
 
 fn load_nvm(wg_mod_home: &PathBuf) -> Result<Box<dyn NVM>, ConfigsError> {
     let nvm_path = wg_mod_home.join("nvm");
+
     let nvm: Box<dyn NVM> = if cfg!(target_os = "windows") {
         Box::new(WindowsNVM::from(nvm_path))
     } else {
         Box::new(LinuxOrMacOsNVM::from(nvm_path))
     };
 
-    println!("Install nvm ...");
-    nvm.install().expect("failed nvm installation");
+    if !nvm.is_installed() {
+        println!("Install nvm ...");
+        nvm.install().expect("failed nvm installation");
+    }
 
     Ok(nvm)
 }

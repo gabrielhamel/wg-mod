@@ -111,4 +111,8 @@ impl NVM for LinuxOrMacOsNVM {
 
         Ok(Node::new(current_node_path))
     }
+
+    fn is_installed(&self) -> bool {
+        self.nvm_path.exists()
+    }
 }
