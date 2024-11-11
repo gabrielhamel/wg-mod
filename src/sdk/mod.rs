@@ -2,8 +2,8 @@ pub mod as3;
 pub mod conda;
 pub mod game_sources;
 pub mod node;
+mod npm;
 pub mod nvm;
-
 type InstallResult = Result<(), String>;
 
 pub trait Installable {

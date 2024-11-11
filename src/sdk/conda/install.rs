@@ -44,6 +44,7 @@ fn get_install_script_name() -> String {
             },
             | ("macos", arch) => ("MacOSX", arch, "sh"),
             | ("windows", arch) => ("Windows", arch, "exe"),
+            | ("linux", arch) => ("Linux", arch, "sh"),
             | (os, arch) => (os, arch, "sh"),
         };
 
