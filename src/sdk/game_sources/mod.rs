@@ -1,15 +1,13 @@
 use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
 use fs_extra::dir::get_dir_content;
 use git2::{
-    Branch, BranchType, FetchOptions, Reference, Remote, RemoteCallbacks,
-    Repository,
+    Branch, BranchType, FetchOptions, Remote, RemoteCallbacks, Repository,
 };
 use inquire::Select;
 use std::fs::create_dir_all;
 use std::io;
 use std::io::Write;
 use std::path::{PathBuf, MAIN_SEPARATOR};
-use std::sync::mpsc::channel;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GameSourcesError {

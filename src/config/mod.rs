@@ -149,7 +149,7 @@ fn load_as3(wg_mod_home: &PathBuf) -> Result<AS3, AS3Error> {
     let as3_path = wg_mod_home.join("as3");
     let as3 = AS3::from(as3_path);
 
-    if !as3.is_installed().expect("") {
+    if !as3.is_installed() {
         println!("Installing action script SDK...");
         as3.install().expect("");
     }
