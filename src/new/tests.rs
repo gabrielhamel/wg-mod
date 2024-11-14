@@ -1,3 +1,5 @@
+use crate::new::template::template_nvm_comfig;
+
 #[test]
 fn mod_files() {
     use super::{template::create_mod_files, NewArgs};
@@ -78,6 +80,20 @@ def fini():
   \"mainClass\": \"BetterMatchmaking\"
 }
 "
+    );
+
+    template_nvm_comfig(&mod_path).unwrap();
+    let nvm_config_content =
+        read_to_string(mod_path.join("settings.txt")).unwrap();
+    assert_eq!(
+        nvm_config_content,
+        "root: ".to_owned()
+            + mod_path.to_str().unwrap()
+            + "\n
+path: " + mod_path.to_str().unwrap()
+            + "\\nodejs\n
+arch: 64\n
+proxy: none\n"
     );
 
     tmp_dir.close().unwrap();

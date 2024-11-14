@@ -1,14 +1,16 @@
 mod settings;
 
 use crate::config::settings::Settings;
+use crate::config::ConfigsError::ConfigNVMError;
 use crate::sdk::as3::{self, AS3Error, AS3};
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
 use crate::sdk::game_sources::{GameSources, GameSourcesError};
+use crate::sdk::npm::NPMError;
 use crate::sdk::nvm::linux_or_mac_os::LinuxOrMacOsNVM;
 use crate::sdk::nvm::windows::WindowsNVM;
-use crate::sdk::nvm::NVM;
-use crate::sdk::{conda, Installable};
+use crate::sdk::nvm::{NVMError, NVM};
+use crate::sdk::{conda, nvm, Installable};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -32,6 +34,9 @@ pub enum ConfigsError {
 
     #[error("Invalid json\n{0}")]
     SettingsParseError(#[from] serde_json::Error),
+
+    #[error("Nvm config failed")]
+    ConfigNVMError(#[from] nvm::NVMError),
 }
 
 pub struct Configs {
@@ -173,7 +178,7 @@ fn load_nvm(wg_mod_home: &PathBuf) -> Result<Box<dyn NVM>, ConfigsError> {
 
     if !nvm.is_installed() {
         println!("Install nvm ...");
-        nvm.install().expect("failed nvm installation");
+        nvm.install()?;
     }
 
     Ok(nvm)
