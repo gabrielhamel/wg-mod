@@ -10,19 +10,24 @@ pub enum NPMError {
 }
 
 pub struct NPM {
-    npm_bin: PathBuf,
+    pub npm_bin: PathBuf,
+}
+
+impl From<PathBuf> for NPM {
+    fn from(npm_bin: PathBuf) -> Self {
+        Self { npm_bin }
+    }
 }
 
 impl NPM {
-    pub fn new(npm_bin: PathBuf) -> Self {
-        Self { npm_bin }
-    }
-
     pub fn exec(
         &self, args: Vec<&str>, envs: Vec<Env>,
     ) -> Result<Output, NPMError> {
         let executable =
             self.npm_bin.to_str().ok_or(NPMError::FailedExecution)?;
+
+        // let mut mutable_args = args.clone();
+        // mutable_args.insert(0, executable);
 
         command(executable, args, envs).map_err(|_| NPMError::FailedExecution)
     }

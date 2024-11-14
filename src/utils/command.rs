@@ -18,5 +18,7 @@ pub fn command(
         command.env(&env.key, &env.value);
     });
 
-    Ok(command.output().map_err(|_| CommandFailed)?)
+    let out = command.output().map_err(|_| CommandFailed)?;
+
+    Ok(out)
 }

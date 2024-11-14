@@ -1,5 +1,6 @@
+use crate::sdk::node::linux_or_macos::NodeLinuxOrMac;
 use crate::sdk::node::Node;
-use crate::sdk::nvm::{create_nvm_directory, NVMError, NVM};
+use crate::sdk::nvm::{NVMError, NVM};
 use crate::utils::command::command;
 use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::downloader::download_file;
@@ -42,7 +43,6 @@ nvm $@",
 
 impl NVM for LinuxOrMacOsNVM {
     fn install(&self) -> Result<(), NVMError> {
-        create_nvm_directory(&self.nvm_path)?;
         let downloaded_file_path = self.nvm_path.join("install.sh");
         let downloaded_file = downloaded_file_path.to_string()?;
 
@@ -70,8 +70,7 @@ impl NVM for LinuxOrMacOsNVM {
     fn install_node(&self) -> Result<(), NVMError> {
         println!("Installing Node via nvm...");
 
-        self.exec(vec!["install", "node"], vec![])
-            .map_err(|_| NVMError::InstallNodeError)?;
+        self.exec(vec!["install", "node"], vec![])?;
 
         self.exec(vec!["current"], vec![])?;
 
@@ -97,19 +96,17 @@ impl NVM for LinuxOrMacOsNVM {
             .map_err(|_| NVMError::ExecError)
     }
 
-    fn get_node(&self) -> Result<Node, NVMError> {
+    fn get_node(&self) -> Result<Box<dyn Node>, NVMError> {
         let node_path = self.nvm_path.join("versions").join("node");
 
         if !node_path.exists() {
-            self.install_node()
-                .map_err(|_| NVMError::InstallNodeError)?;
+            self.install_node()?;
         }
 
-        let out = self.exec(vec!["current"], vec![])?;
-        let current_node_path =
-            node_path.join(String::from_utf8(out.stdout)?.trim());
+        let current_version = self.nvm_current_version()?;
+        let current_node_path = node_path.join(current_version);
 
-        Ok(Node::new(current_node_path))
+        Ok(Box::new(NodeLinuxOrMac::from(current_node_path)))
     }
 
     fn is_installed(&self) -> bool {

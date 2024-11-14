@@ -1,15 +1,14 @@
-use crate::sdk::npm::NPM;
-use std::path::PathBuf;
+use crate::sdk::npm::{NPMError, NPM};
+pub mod linux_or_macos;
 
-pub struct Node {
-    node_path: PathBuf,
+pub mod windows;
+
+#[derive(thiserror::Error, Debug)]
+pub enum NodeError {
+    #[error("NPM error")]
+    NPMError(#[from] NPMError),
 }
-impl Node {
-    pub fn new(node_path: PathBuf) -> Self {
-        Self { node_path }
-    }
 
-    pub fn get_npm(&self) -> NPM {
-        NPM::new(self.node_path.join("bin").join("npm"))
-    }
+pub trait Node {
+    fn get_npm(&self) -> NPM;
 }
