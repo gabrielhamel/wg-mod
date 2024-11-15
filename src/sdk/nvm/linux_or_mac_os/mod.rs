@@ -1,15 +1,16 @@
-use crate::sdk::node::linux_or_macos::NodeLinuxOrMac;
+use crate::new::template::create_nvm_executable;
+use crate::sdk::node::linux_or_macos::LinuxOrMacNode;
 use crate::sdk::node::Node;
+use crate::sdk::nvm::linux_or_mac_os::install::install_nvm_sdk;
 use crate::sdk::nvm::{NVMError, NVM};
+use crate::sdk::{InstallResult, Installable};
 use crate::utils::command::command;
 use crate::utils::convert_pathbuf_to_string::Stringify;
-use crate::utils::downloader::download_file;
-use crate::utils::file_template::{write_template, TemplateError};
 use crate::utils::Env;
-use serde_json::json;
-use std::fs;
 use std::path::PathBuf;
-use std::process::{Command, Output};
+use std::process::Output;
+
+mod install;
 
 pub struct LinuxOrMacOsNVM {
     nvm_path: PathBuf,
@@ -30,49 +31,37 @@ impl LinuxOrMacOsNVM {
         self.nvm_path.join(self.get_executable_name())
     }
 
-    fn create_executable(&self, path: &PathBuf) -> Result<(), TemplateError> {
-        write_template(
-            &path,
+    fn prepare(&self) -> Result<(), NVMError> {
+        install_nvm_sdk(&self.nvm_path)?;
+        create_nvm_executable(
+            &self.nvm_path,
             self.get_executable_name().as_str(),
-            "[ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\"  # This loads nvm
-[ -s \"$NVM_DIR/bash_completion\" ] && \\. \"$NVM_DIR/bash_completion\"  # This loads nvm bash_completion
-nvm $@",
-                       &json!({}))
+        )
+        .map_err(|_| NVMError::InstallError)?;
+
+        Ok(())
+    }
+}
+
+impl Installable for LinuxOrMacOsNVM {
+    fn is_installed(&self) -> bool {
+        self.nvm_path.exists()
+    }
+
+    fn install(&self) -> InstallResult {
+        if self.is_installed() {
+            Err("NVM already installed".into())
+        } else {
+            self.prepare().map_err(|err| err.to_string())
+        }
     }
 }
 
 impl NVM for LinuxOrMacOsNVM {
-    fn install(&self) -> Result<(), NVMError> {
-        let downloaded_file_path = self.nvm_path.join("install.sh");
-        let downloaded_file = downloaded_file_path.to_string()?;
-
-        download_file(
-            "https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh",
-            &downloaded_file,
-        )
-        .map_err(|_| NVMError::DownloadError)?;
-
-        let mut command = Command::new("bash");
-        command.arg(&downloaded_file).env("NVM_DIR", &self.nvm_path);
-
-        let _ = command.output().map_err(|_| NVMError::InstallError)?;
-
-        self.create_executable(&self.nvm_path)
-            .map_err(|err| println!("{}", err))
-            .expect("TODO: panic message");
-
-        fs::remove_file(&downloaded_file_path)
-            .map_err(|_| NVMError::InstallError)?;
-
-        Ok(())
-    }
-
     fn install_node(&self) -> Result<(), NVMError> {
         println!("Installing Node via nvm...");
 
         self.exec(vec!["install", "node"], vec![])?;
-
-        self.exec(vec!["current"], vec![])?;
 
         Ok(())
     }
@@ -106,10 +95,6 @@ impl NVM for LinuxOrMacOsNVM {
         let current_version = self.nvm_current_version()?;
         let current_node_path = node_path.join(current_version);
 
-        Ok(Box::new(NodeLinuxOrMac::from(current_node_path)))
-    }
-
-    fn is_installed(&self) -> bool {
-        self.nvm_path.exists()
+        Ok(Box::new(LinuxOrMacNode::from(current_node_path)))
     }
 }
