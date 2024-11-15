@@ -1,4 +1,4 @@
-use crate::new::template::template_nvm_comfig;
+use crate::new::template::template_nvm_config;
 use crate::sdk::node::windows::NodeWindows;
 use crate::sdk::node::Node;
 use crate::sdk::nvm::{create_nvm_directory, NVMError, NVM};
@@ -46,7 +46,7 @@ impl NVM for WindowsNVM {
         fs::remove_file(&downloaded_file_path)
             .map_err(|_| NVMError::InstallError)?;
 
-        template_nvm_comfig(&self.nvm_path)
+        template_nvm_config(&self.nvm_path)
             .map_err(|_| NVMError::InstallError)?;
 
         Ok(())
@@ -97,9 +97,9 @@ impl NVM for WindowsNVM {
     fn get_node(&self) -> Result<Box<dyn Node>, NVMError> {
         let node_path = self.nvm_path.join("nodejs");
 
-        // if !node_path.exists() {
-        self.install_node()?;
-        // }
+        if !node_path.exists() {
+            self.install_node()?;
+        }
 
         Ok(Box::new(NodeWindows::from(node_path)))
     }

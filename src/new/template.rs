@@ -149,7 +149,7 @@ pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
     Ok(())
 }
 
-pub fn template_nvm_comfig(parent_dir: &PathBuf) -> Result<(), TemplateError> {
+pub fn template_nvm_config(parent_dir: &PathBuf) -> Result<(), TemplateError> {
     write_template(
         parent_dir,
         "settings.txt",

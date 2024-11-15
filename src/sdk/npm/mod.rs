@@ -26,9 +26,6 @@ impl NPM {
         let executable =
             self.npm_bin.to_str().ok_or(NPMError::FailedExecution)?;
 
-        // let mut mutable_args = args.clone();
-        // mutable_args.insert(0, executable);
-
         command(executable, args, envs).map_err(|_| NPMError::FailedExecution)
     }
 }
