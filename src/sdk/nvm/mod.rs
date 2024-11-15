@@ -34,10 +34,6 @@ pub enum NVMError {
 }
 
 pub trait NVM {
-    fn install(&self) -> Result<(), NVMError>;
-
-    fn is_installed(&self) -> bool;
-
     fn install_node(&self) -> Result<(), NVMError>;
 
     fn exec(&self, args: Vec<&str>, envs: Vec<Env>)

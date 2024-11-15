@@ -6,11 +6,10 @@ use crate::sdk::as3::{self, AS3Error, AS3};
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
 use crate::sdk::game_sources::{GameSources, GameSourcesError};
-use crate::sdk::npm::NPMError;
 use crate::sdk::nvm::linux_or_mac_os::LinuxOrMacOsNVM;
 use crate::sdk::nvm::windows::WindowsNVM;
 use crate::sdk::nvm::{NVMError, NVM};
-use crate::sdk::{conda, nvm, Installable};
+use crate::sdk::{conda, Installable};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -27,7 +26,7 @@ pub enum ConfigsError {
     CondaError(#[from] conda::CondaError),
 
     #[error("Unable to load AS3\n{0}")]
-    AS3Error(#[from] as3::AS3Error),
+    AS3Error(#[from] AS3Error),
 
     #[error("Unable to load settings\n{0}")]
     SettingsError(String),
@@ -36,7 +35,7 @@ pub enum ConfigsError {
     SettingsParseError(#[from] serde_json::Error),
 
     #[error("Nvm config failed")]
-    ConfigNVMError(#[from] nvm::NVMError),
+    ConfigNVMError(#[from] NVMError),
 }
 
 pub struct Configs {
@@ -49,7 +48,7 @@ pub struct Configs {
 }
 
 fn get_tool_home() -> Result<PathBuf, ConfigsError> {
-    let user_path: std::path::PathBuf =
+    let user_path: PathBuf =
         home::home_dir().ok_or(ConfigsError::UserHomeError)?;
     let wg_tool_path = user_path.join(".wg-mod");
     Ok(wg_tool_path)
@@ -169,17 +168,24 @@ fn load_as3(wg_mod_home: &PathBuf) -> Result<AS3, AS3Error> {
 
 fn load_nvm(wg_mod_home: &PathBuf) -> Result<Box<dyn NVM>, ConfigsError> {
     let nvm_path = wg_mod_home.join("nvm");
+    let nvm_destination = nvm_path.clone();
+
+    let nvm_installer: Box<dyn Installable> = if cfg!(target_os = "windows") {
+        Box::new(WindowsNVM::from(nvm_destination))
+    } else {
+        Box::new(LinuxOrMacOsNVM::from(nvm_destination))
+    };
+
+    if !nvm_installer.is_installed() {
+        println!("Install nvm ...");
+        nvm_installer.install().expect("failed ton install nvm");
+    }
 
     let nvm: Box<dyn NVM> = if cfg!(target_os = "windows") {
         Box::new(WindowsNVM::from(nvm_path))
     } else {
         Box::new(LinuxOrMacOsNVM::from(nvm_path))
     };
-
-    if !nvm.is_installed() {
-        println!("Install nvm ...");
-        nvm.install()?;
-    }
 
     Ok(nvm)
 }

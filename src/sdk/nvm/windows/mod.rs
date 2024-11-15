@@ -1,15 +1,15 @@
-use crate::new::template::template_nvm_config;
-use crate::sdk::node::windows::NodeWindows;
+use crate::sdk::node::windows::WindowsNode;
 use crate::sdk::node::Node;
-use crate::sdk::nvm::{create_nvm_directory, NVMError, NVM};
+use crate::sdk::nvm::windows::install::install_nvm_windows;
+use crate::sdk::nvm::{NVMError, NVM};
+use crate::sdk::{InstallResult, Installable};
 use crate::utils::command::command;
 use crate::utils::convert_pathbuf_to_string::Stringify;
-use crate::utils::downloader::download_file;
 use crate::utils::Env;
-use std::fs;
 use std::path::PathBuf;
 use std::process::Output;
-use zip_extensions::zip_extract;
+
+mod install;
 
 pub struct WindowsNVM {
     nvm_path: PathBuf,
@@ -27,36 +27,24 @@ impl From<PathBuf> for WindowsNVM {
     }
 }
 
-impl NVM for WindowsNVM {
-    fn install(&self) -> Result<(), NVMError> {
-        create_nvm_directory(&self.nvm_path)?;
-        let downloaded_file_path = self.nvm_path.join("nvm.zip");
-        let downloaded_file = downloaded_file_path.to_string()?;
-
-        // not in 1.1.12 because issue in it: https://github.com/coreybutler/nvm-windows/issues/1068
-        download_file(
-            "https://github.com/coreybutler/nvm-windows/releases/download/1.1.11/nvm-noinstall.zip",
-            &downloaded_file,
-        )
-            .map_err(|_| NVMError::DownloadError)?;
-
-        zip_extract(&downloaded_file_path, &self.nvm_path)
-            .map_err(|_| NVMError::InstallError)?;
-
-        fs::remove_file(&downloaded_file_path)
-            .map_err(|_| NVMError::InstallError)?;
-
-        template_nvm_config(&self.nvm_path)
-            .map_err(|_| NVMError::InstallError)?;
-
-        Ok(())
-    }
-
+impl Installable for WindowsNVM {
     fn is_installed(&self) -> bool {
         self.nvm_path.exists()
     }
 
+    fn install(&self) -> InstallResult {
+        if self.is_installed() {
+            Err("NVM already installed".into())
+        } else {
+            install_nvm_windows(&self.nvm_path).map_err(|err| err.to_string())
+        }
+    }
+}
+
+impl NVM for WindowsNVM {
     fn install_node(&self) -> Result<(), NVMError> {
+        println!("Installing Node via nvm...");
+
         let args = vec!["install", "latest"];
         let envs = vec![];
         let _ = self
@@ -101,6 +89,6 @@ impl NVM for WindowsNVM {
             self.install_node()?;
         }
 
-        Ok(Box::new(NodeWindows::from(node_path)))
+        Ok(Box::new(WindowsNode::from(node_path)))
     }
 }
