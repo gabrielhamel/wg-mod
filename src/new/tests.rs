@@ -1,4 +1,4 @@
-use crate::new::template::template_nvm_comfig;
+use crate::new::template::template_nvm_config;
 
 #[test]
 fn mod_files() {
@@ -82,7 +82,7 @@ def fini():
 "
     );
 
-    template_nvm_comfig(&mod_path).unwrap();
+    template_nvm_config(&mod_path).unwrap();
     let nvm_config_content =
         read_to_string(mod_path.join("settings.txt")).unwrap();
     assert_eq!(
