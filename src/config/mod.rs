@@ -66,16 +66,6 @@ impl Configs {
         let settings = load_settings(&wg_mod_home)?;
         let asconfigc = load_asconfigc(&wg_mod_home)?;
 
-        let res = asconfigc
-            .exec(vec!["--help"], vec![])
-            .expect("ASCONFIGERROR");
-        println!(
-            "{:?} {:?} {:?}",
-            res.status,
-            String::from_utf8_lossy(&res.stdout),
-            String::from_utf8_lossy(&res.stderr)
-        );
-
         Ok(Configs {
             game_sources,
             wg_mod_home,

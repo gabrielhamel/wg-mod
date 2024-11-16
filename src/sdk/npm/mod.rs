@@ -1,4 +1,5 @@
 use crate::utils::command::command;
+use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::Env;
 use std::path::PathBuf;
 use std::process::Output;
@@ -26,18 +27,26 @@ impl From<PathBuf> for NPM {
 }
 
 impl NPM {
-    fn exec(
-        &self, args: Vec<&str>, envs: Vec<Env>,
-    ) -> Result<Output, NPMError> {
+    fn exec(&self, args: Vec<&str>) -> Result<Output, NPMError> {
         let executable =
             self.npm_bin.to_str().ok_or(NPMError::FailedExecution)?;
 
-        command(executable, args, envs).map_err(|_| NPMError::FailedExecution)
+        let env = vec![
+            (Env {
+                key: "PATH".to_string(),
+                value: self
+                    .get_bin_directory()?
+                    .to_string()
+                    .map_err(|_| NPMError::GetBinDirectoryError)?,
+            }),
+        ];
+
+        command(executable, args, env).map_err(|_| NPMError::FailedExecution)
     }
 
     pub fn is_package_installed(&self, name: &str) -> Result<bool, NPMError> {
         let result = self
-            .exec(vec!["list", "-g", name], vec![])
+            .exec(vec!["list", "-g", name])
             .map_err(|e| NPMError::InstallPackageFailed(e.to_string()))?;
 
         Ok(result.status.success())
@@ -54,7 +63,7 @@ impl NPM {
         println!("Installing {}...", name);
 
         let result = self
-            .exec(vec!["install", "-g", name], vec![])
+            .exec(vec!["install", "-g", name])
             .map_err(|e| NPMError::InstallPackageFailed(e.to_string()))?;
 
         if result.status.success() {
