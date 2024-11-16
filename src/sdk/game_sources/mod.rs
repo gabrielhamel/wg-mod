@@ -174,6 +174,7 @@ impl GameSources {
                             .name()
                             .ok_or(GameSourcesError::GitBranchError)?
                             .to_string()
+                            .replace("refs/heads/", "")
                             .replace("refs/remotes/origin/", ""));
                     }
                 }

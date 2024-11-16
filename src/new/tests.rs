@@ -1,5 +1,3 @@
-use crate::new::template::template_nvm_config;
-
 #[test]
 fn mod_files() {
     use super::{template::create_mod_files, NewArgs};

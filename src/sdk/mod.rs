@@ -1,4 +1,5 @@
 pub mod as3;
+pub mod asconfigc;
 pub mod conda;
 pub mod game_sources;
 pub mod node;
