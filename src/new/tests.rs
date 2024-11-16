@@ -1,6 +1,7 @@
 #[test]
 fn mod_files() {
     use super::{template::create_mod_files, NewArgs};
+    use crate::new::template::template_nvm_config;
     use std::fs::read_to_string;
     use tempfile::tempdir;
 

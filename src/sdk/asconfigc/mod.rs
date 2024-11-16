@@ -44,7 +44,7 @@ impl From<NPM> for ASConfigc {
 }
 
 impl ASConfigc {
-    pub fn exec(
+    fn exec(
         &self, args: Vec<&str>, envs: Vec<Env>,
     ) -> Result<Output, ASConfigcError> {
         let bin_dir = self.npm.get_bin_directory()?;

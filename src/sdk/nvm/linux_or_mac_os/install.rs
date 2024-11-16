@@ -1,4 +1,4 @@
-use crate::sdk::nvm::NVMError;
+use crate::sdk::nvm::{create_nvm_directory, NVMError};
 use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::downloader::download_file;
 use std::fs;
@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 pub fn install_nvm_sdk(nvm_path: &PathBuf) -> Result<(), NVMError> {
+    create_nvm_directory(nvm_path).map_err(|_| NVMError::InstallError)?;
     let downloaded_file_path = nvm_path.join("install.sh");
     let downloaded_file = downloaded_file_path.to_string()?;
 
