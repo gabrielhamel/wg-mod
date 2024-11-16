@@ -1,8 +1,8 @@
 mod settings;
 
 use crate::config::settings::Settings;
-use crate::config::ConfigsError::ConfigNVMError;
-use crate::sdk::as3::{self, AS3Error, AS3};
+use crate::sdk::as3::{AS3Error, AS3};
+use crate::sdk::asconfigc::ASConfigc;
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
 use crate::sdk::game_sources::{GameSources, GameSourcesError};
@@ -36,6 +36,9 @@ pub enum ConfigsError {
 
     #[error("Nvm config failed")]
     ConfigNVMError(#[from] NVMError),
+
+    #[error("ASConfig loading error")]
+    ASConfigError,
 }
 
 pub struct Configs {
@@ -43,7 +46,7 @@ pub struct Configs {
     pub game_sources: GameSources,
     pub conda_environment: CondaEnvironment,
     pub as3: AS3,
-    pub nvm: Box<dyn NVM>,
+    pub asconfigc: ASConfigc,
     pub settings: Settings,
 }
 
@@ -60,15 +63,25 @@ impl Configs {
         let game_sources = load_game_sources(&wg_mod_home)?;
         let conda_environment = load_conda_environment(&wg_mod_home)?;
         let as3 = load_as3(&wg_mod_home)?;
-        let nvm = load_nvm(&wg_mod_home)?;
         let settings = load_settings(&wg_mod_home)?;
+        let asconfigc = load_asconfigc(&wg_mod_home)?;
+
+        let res = asconfigc
+            .exec(vec!["--help"], vec![])
+            .expect("ASCONFIGERROR");
+        println!(
+            "{:?} {:?} {:?}",
+            res.status,
+            String::from_utf8_lossy(&res.stdout),
+            String::from_utf8_lossy(&res.stderr)
+        );
 
         Ok(Configs {
             game_sources,
             wg_mod_home,
             conda_environment,
             as3,
-            nvm,
+            asconfigc,
             settings,
         })
     }
@@ -101,6 +114,22 @@ fn create_default_settings_file(path: &PathBuf) -> Result<(), ConfigsError> {
     })?;
 
     Ok(())
+}
+
+fn load_asconfigc(wg_mod_home: &PathBuf) -> Result<ASConfigc, ConfigsError> {
+    let nvm = load_nvm(&wg_mod_home)?;
+    let node = nvm.get_node()?;
+    let npm = node.get_npm();
+    let asconfigc = ASConfigc::from(npm);
+
+    if !asconfigc.is_installed() {
+        asconfigc.install().map_err(|e| {
+            eprintln!("{}", e);
+            ConfigsError::ASConfigError
+        })?;
+    }
+
+    Ok(asconfigc)
 }
 
 fn load_settings(wg_mod_home: &PathBuf) -> Result<Settings, ConfigsError> {
