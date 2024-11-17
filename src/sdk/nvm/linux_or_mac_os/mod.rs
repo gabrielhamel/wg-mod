@@ -16,9 +16,11 @@ pub struct LinuxOrMacOsNVM {
     nvm_path: PathBuf,
 }
 
-impl From<PathBuf> for LinuxOrMacOsNVM {
-    fn from(nvm_path: PathBuf) -> Self {
-        Self { nvm_path }
+impl From<&PathBuf> for LinuxOrMacOsNVM {
+    fn from(nvm_path: &PathBuf) -> Self {
+        Self {
+            nvm_path: nvm_path.clone(),
+        }
     }
 }
 
@@ -37,7 +39,7 @@ impl LinuxOrMacOsNVM {
             &self.nvm_path,
             self.get_executable_name().as_str(),
         )
-        .map_err(|_| NVMError::InstallError)?;
+        .map_err(|e| NVMError::InstallError(e.to_string()))?;
 
         Ok(())
     }

@@ -21,9 +21,11 @@ impl WindowsNVM {
     }
 }
 
-impl From<PathBuf> for WindowsNVM {
-    fn from(nvm_path: PathBuf) -> Self {
-        Self { nvm_path }
+impl From<&PathBuf> for WindowsNVM {
+    fn from(nvm_path: &PathBuf) -> Self {
+        Self {
+            nvm_path: nvm_path.clone(),
+        }
     }
 }
 
