@@ -14,7 +14,6 @@ pub fn install_conda(destination: &PathBuf) -> Result<(), CondaError> {
 
     let url =
         format!("https://repo.anaconda.com/miniconda/{install_script_name}");
-
     download_file(&url, install_script_destination.as_str())?;
 
     let install_destination =

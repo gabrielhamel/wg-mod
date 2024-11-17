@@ -53,13 +53,11 @@ impl From<&PathBuf> for Conda {
 
 impl Conda {
     fn get_executable_path(&self) -> PathBuf {
-        let executable_name = if cfg!(target_os = "windows") {
-            "condabin\\conda.bat"
+        if cfg!(target_os = "windows") {
+            self.conda_path.join("condabin").join("conda.bat")
         } else {
-            "bin/conda"
-        };
-
-        self.conda_path.join(executable_name)
+            self.conda_path.join("bin").join("conda")
+        }
     }
 
     fn command(&self, args: Vec<&str>) -> Result<(String, String), CondaError> {

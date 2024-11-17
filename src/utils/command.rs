@@ -1,16 +1,16 @@
-use crate::utils::command::CommandError::CommandFailed;
 use crate::utils::Env;
+use std::io;
 use std::process::{Command, Output};
 
 #[derive(thiserror::Error, Debug)]
-pub enum CommandError {
+pub enum Error {
     #[error("Failed to execute command")]
-    CommandFailed,
+    ExecutionError(#[from] io::Error),
 }
 
 pub fn command(
     command: &str, args: Vec<&str>, env: Vec<Env>,
-) -> Result<Output, CommandError> {
+) -> Result<Output, Error> {
     let mut command = Command::new(command);
     command.args(args);
 
@@ -18,7 +18,7 @@ pub fn command(
         command.env(&env.key, &env.value);
     });
 
-    let out = command.output().map_err(|_| CommandFailed)?;
+    let out = command.output().map_err(Error::ExecutionError)?;
 
     Ok(out)
 }
