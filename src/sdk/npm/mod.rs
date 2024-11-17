@@ -17,7 +17,7 @@ pub enum NPMError {
 }
 
 pub struct NPM {
-    pub npm_bin: PathBuf,
+    npm_bin: PathBuf,
 }
 
 impl From<PathBuf> for NPM {
@@ -77,5 +77,37 @@ impl NPM {
             "{}\n{}",
             stdout, stderr
         )))
+    }
+
+    pub fn version(&self) -> Result<String, NPMError> {
+        let out = self.exec(vec!["--version"])?;
+
+        Ok(String::from_utf8(out.stdout)
+            .map_err(|_| NPMError::FailedExecution)?
+            .trim()
+            .to_string())
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::sdk::nvm::load_nvm;
+    use regex::Regex;
+    use tempfile::tempdir;
+
+    #[test]
+    fn install_npm() {
+        let tmp_dir = tempdir().unwrap();
+        let tmp_dir_path = tmp_dir.path().to_path_buf();
+        let nvm_path = tmp_dir_path.join("nvm");
+
+        let nvm = load_nvm(&nvm_path).unwrap();
+        let node = nvm.get_node().unwrap();
+        let npm = node.get_npm();
+
+        let version = npm.version().unwrap();
+
+        let semantic_version_pattern = Regex::new("^([0-9]+)\\.([0-9]+)\\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+)?$").unwrap();
+        assert!(semantic_version_pattern.is_match(&version));
     }
 }
