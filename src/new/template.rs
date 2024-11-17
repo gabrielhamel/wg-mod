@@ -88,6 +88,7 @@ fn template_ui_entrypoint(
     )
 }
 
+// TODO -> Main class is not always "fr.gabouchet...", make it dynamic by package_name
 fn template_ui_config(
     args: &NewArgs, parent_dir: &PathBuf,
 ) -> Result<(), TemplateError> {
@@ -96,19 +97,16 @@ fn template_ui_config(
         "asconfig.json",
         "{
   \"config\": \"flex\",
-  \"type\": \"lib\",
   \"compilerOptions\": {
-    \"output\": \".\",
-    \"targets\": [
-      \"SWF\"
-    ],
-    \"source-map\": true
+    \"output\": \"../target/build/ui/{{mode_name}}.swf\",
+    \"source-path\": [\"src\"]
   },
-  \"mainClass\": \"{{main_class_name}}\"
+  \"mainClass\": \"fr.gabouchet.{{main_class_name}}\"
 }
 ",
         &json!({
             "main_class_name": args.name.to_case(Case::Pascal),
+            "mode_name": args.name.to_case(Case::Snake),
         }),
     )
 }

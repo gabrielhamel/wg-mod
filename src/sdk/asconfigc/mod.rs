@@ -65,9 +65,10 @@ impl ASConfigc {
             .map_err(|_| ASConfigcError::FailedExecution)
     }
 
-    pub fn compile_all(
+    pub fn build(
         &self, input_path: &PathBuf,
     ) -> Result<(), ASConfigcError> {
+
         let config =
             Configs::load().map_err(|_| ASConfigcError::FailedExecution)?;
         let as3_sdk_path = config.as3.get_as3_path();

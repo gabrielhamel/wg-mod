@@ -86,7 +86,7 @@ impl ModBuilder {
 
     fn build_flash_src(&self) -> Result<(), ModBuilderError> {
         let flash_sources = self.mod_path.join("ui");
-        let flash_build_destination = self.build_path.join("gui/flash");
+        let flash_build_destination = self.build_path.join("res/gui/flash");
 
         self.flash_builder
             .build(&flash_sources, &flash_build_destination)?;

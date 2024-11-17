@@ -68,15 +68,11 @@ def fini():
         ui_config_content,
         "{
   \"config\": \"flex\",
-  \"type\": \"lib\",
   \"compilerOptions\": {
-    \"output\": \".\",
-    \"targets\": [
-      \"SWF\"
-    ],
-    \"source-map\": true
+    \"output\": \"../target/build/ui/better_matchmaking.swf\",
+    \"source-path\": [\"src\"]
   },
-  \"mainClass\": \"BetterMatchmaking\"
+  \"mainClass\": \"fr.gabouchet.BetterMatchmaking\"
 }
 "
     );
