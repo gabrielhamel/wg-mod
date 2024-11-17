@@ -109,7 +109,7 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn install() {
+    fn install_nvm() {
         let tmp_dir = tempdir().unwrap();
         let tmp_dir_path = tmp_dir.path().to_path_buf();
         let nvm_path = tmp_dir_path.join("nvm");
