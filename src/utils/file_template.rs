@@ -42,32 +42,37 @@ where
         .map_err(TemplateError::TemplateWriteError)
 }
 
-#[test]
-fn file_template() {
-    use serde_json::json;
-    use std::io::Read;
-    use tempfile::tempdir;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let tmp_dir = tempdir().unwrap();
-    let filepath = tmp_dir.path().join("file.txt");
+    #[test]
+    fn file_template() {
+        use serde_json::json;
+        use std::io::Read;
+        use tempfile::tempdir;
 
-    write_template(
-        &tmp_dir.path().to_path_buf(),
-        "file.txt",
-        "{{one}} {{two}} !",
-        &json!({
-            "one": "Hello",
-            "two": "world"
-        }),
-    )
-    .unwrap();
+        let tmp_dir = tempdir().unwrap();
+        let filepath = tmp_dir.path().join("file.txt");
 
-    let mut file = File::open(&filepath).unwrap();
-    let mut file_content = String::new();
-    let bytes_reads = file.read_to_string(&mut file_content).unwrap();
+        write_template(
+            &tmp_dir.path().to_path_buf(),
+            "file.txt",
+            "{{one}} {{two}} !",
+            &json!({
+                "one": "Hello",
+                "two": "world"
+            }),
+        )
+        .unwrap();
 
-    assert_eq!(bytes_reads, 13);
-    assert_eq!(file_content, "Hello world !");
+        let mut file = File::open(&filepath).unwrap();
+        let mut file_content = String::new();
+        let bytes_reads = file.read_to_string(&mut file_content).unwrap();
 
-    tmp_dir.close().unwrap();
+        assert_eq!(bytes_reads, 13);
+        assert_eq!(file_content, "Hello world !");
+
+        tmp_dir.close().unwrap();
+    }
 }
