@@ -20,12 +20,13 @@ impl Node for WindowsNode {
     }
 
     fn exec(&self, args: Vec<&str>) -> Result<Output, NodeError> {
-        let binaries_path = self.node_path.join("bin");
-        let node_exec_path = binaries_path.join("node");
-
+        let node_exec_path = self.node_path.join("node");
         let executable =
             node_exec_path.to_str().ok_or(NodeError::FailedExecution)?;
-        command(executable, args, vec![])
-            .map_err(|_| NodeError::FailedExecution)
+
+        command(executable, args, vec![]).map_err(|e| {
+            eprintln!("{}", e);
+            NodeError::FailedExecution
+        })
     }
 }

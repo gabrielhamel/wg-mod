@@ -6,7 +6,6 @@ use crate::sdk::nvm::linux_or_mac_os::LinuxOrMacOsNVM;
 use crate::sdk::nvm::windows::WindowsNVM;
 use crate::sdk::Installable;
 use crate::utils::convert_pathbuf_to_string::PathBufToStringError;
-use crate::utils::Env;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::Output;
@@ -39,26 +38,19 @@ pub enum NVMError {
 pub trait NVM {
     fn install_node(&self) -> Result<(), NVMError>;
 
-    fn exec(&self, args: Vec<&str>, envs: Vec<Env>)
-        -> Result<Output, NVMError>;
+    fn exec(&self, args: Vec<&str>) -> Result<Output, NVMError>;
 
     fn get_node(&self) -> Result<Box<dyn Node>, NVMError>;
 
     fn nvm_use(&self, version: &str) -> Result<Output, NVMError> {
-        self.exec(vec!["use", version], vec![])
+        self.exec(vec!["use", version])
             .map_err(|_| NVMError::ExecUseError)
     }
 
-    fn current_node_version(&self) -> Result<String, NVMError> {
-        let out = self.exec(vec!["current"], vec![])?;
-        Ok(String::from_utf8(out.stdout)
-            .map_err(|_| NVMError::ExecCurrentError)?
-            .trim()
-            .to_string())
-    }
+    fn current_node_version(&self) -> Result<String, NVMError>;
 
     fn version(&self) -> Result<String, NVMError> {
-        let out = self.exec(vec!["--version"], vec![])?;
+        let out = self.exec(vec!["--version"])?;
 
         Ok(String::from_utf8(out.stdout)
             .map_err(|_| NVMError::ExecCurrentError)?

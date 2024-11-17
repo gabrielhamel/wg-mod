@@ -36,6 +36,7 @@ pub mod tests {
     fn install_node() {
         let tmp_dir = tempdir().unwrap();
         let tmp_dir_path = tmp_dir.path().to_path_buf();
+
         let nvm_path = tmp_dir_path.join("nvm");
 
         let nvm = load_nvm(&nvm_path).unwrap();

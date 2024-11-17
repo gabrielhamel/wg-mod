@@ -48,49 +48,53 @@ impl NVM for WindowsNVM {
         println!("Installing Node via nvm...");
 
         let args = vec!["install", "latest"];
-        let envs = vec![];
-        let _ = self
-            .exec(args, envs)
-            .map_err(|_| NVMError::InstallNodeError);
+        self.exec(args)
+            .map_err(|e| NVMError::InstallError(e.to_string()))?;
 
         self.nvm_use("latest")?;
 
         Ok(())
     }
 
-    fn exec(
-        &self, args: Vec<&str>, envs: Vec<Env>,
-    ) -> Result<Output, NVMError> {
+    fn exec(&self, args: Vec<&str>) -> Result<Output, NVMError> {
         let executable = self.get_executable_path();
         let executable_str = executable.to_str().ok_or(NVMError::ExecError)?;
 
-        let mut mutable_args = args.clone();
-        mutable_args.insert(0, executable_str);
-
-        let nvm_dir_env = Env {
+        let env = vec![Env {
             key: "NVM_HOME".to_string(),
             value: self.nvm_path.to_string()?,
-        };
-        let nvm_simlink = Env {
-            key: "NVM_SYMLINK".to_string(),
-            value: self.nvm_path.join("nodejs").to_string()?,
-        };
+        }];
 
-        let mut mutable_envs = envs.clone();
-        mutable_envs.push(nvm_dir_env);
-        mutable_envs.push(nvm_simlink);
-
-        command("powershell.exe", mutable_args, mutable_envs)
-            .map_err(|_| NVMError::ExecError)
+        command(executable_str, args, env).map_err(|_| NVMError::ExecError)
     }
 
     fn get_node(&self) -> Result<Box<dyn Node>, NVMError> {
-        let node_path = self.nvm_path.join("nodejs");
+        let mut version = self.current_node_version()?;
+        let mut node_path = self.nvm_path.join(version);
 
         if !node_path.exists() {
             self.install_node()?;
         }
 
+        version = self.current_node_version()?;
+        node_path = self.nvm_path.join(version);
+
         Ok(Box::new(WindowsNode::from(node_path)))
+    }
+
+    fn current_node_version(&self) -> Result<String, NVMError> {
+        let out = self.exec(vec!["list", "installed"])?;
+        if !out.status.success() {
+            return Err(NVMError::ExecError);
+        }
+
+        let stdout = String::from_utf8(out.stdout)
+            .map_err(|_| NVMError::ExecCurrentError)?
+            .trim()
+            .to_string()
+            .replace("* ", "")
+            .replace(" (Currently using 64-bit executable)", "");
+
+        Ok(format!("v{}", stdout))
     }
 }

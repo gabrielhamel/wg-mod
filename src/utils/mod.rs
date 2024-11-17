@@ -7,7 +7,7 @@ pub mod command;
 pub mod convert_pathbuf_to_string;
 pub mod convert_to_absolute_path;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Env {
     pub key: String,
     pub value: String,
