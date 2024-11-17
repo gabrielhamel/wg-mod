@@ -5,15 +5,19 @@ use crate::sdk::nvm::{BoxedNVM, NVMError};
 use crate::sdk::{InstallResult, Installable};
 use crate::utils::command::command;
 use crate::utils::convert_pathbuf_to_string::Stringify;
-use crate::utils::Env;
+use crate::utils::{command, Env};
 use std::path::PathBuf;
+use std::process;
 use std::process::Output;
 use std::string::FromUtf8Error;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ASConfigcError {
-    #[error("Execution failed")]
-    FailedExecution,
+    #[error("Execution error")]
+    ExecutionError(#[from] command::Error),
+
+    #[error("Bad exit status")]
+    BadExitStatus(process::Output),
 
     #[error("NVM error")]
     NVMError(#[from] NVMError),
@@ -26,6 +30,9 @@ pub enum ASConfigcError {
 
     #[error("Unable to decode output of the command")]
     DecodeOutputError(#[from] FromUtf8Error),
+
+    #[error("Path error")]
+    InvalidPathError,
 }
 
 pub struct ASConfigc {
@@ -59,7 +66,7 @@ impl From<NPM> for ASConfigc {
 }
 
 impl ASConfigc {
-    fn exec(&self, args: Vec<&str>) -> Result<Output, ASConfigcError> {
+    fn exec(&self, args: Vec<&str>) -> Result<process::Output, ASConfigcError> {
         let bin_dir = self.npm.get_bin_directory()?;
         let exec_path = if cfg!(target_os = "windows") {
             bin_dir.join("asconfigc.cmd")
@@ -68,16 +75,23 @@ impl ASConfigc {
         };
 
         let executable =
-            exec_path.to_str().ok_or(ASConfigcError::FailedExecution)?;
+            exec_path.to_str().ok_or(ASConfigcError::InvalidPathError)?;
 
-        command(executable, args, vec![])
-            .map_err(|_| ASConfigcError::FailedExecution)
+        let output = command(executable, args, vec![])
+            .map_err(ASConfigcError::ExecutionError)?;
+
+        if !output.status.success() {
+            return Err(ASConfigcError::BadExitStatus(output));
+        }
+
+        Ok(output)
     }
 
     pub fn version(&self) -> Result<String, ASConfigcError> {
         let out = self.exec(vec!["--version"])?;
+        let version = String::from_utf8(out.stdout)?.trim().to_string();
 
-        Ok(String::from_utf8(out.stdout)?.trim().to_string())
+        Ok(version)
     }
 }
 

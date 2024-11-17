@@ -8,7 +8,7 @@ pub mod convert_pathbuf_to_string;
 pub mod convert_to_absolute_path;
 pub mod tmp_dir;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Env {
     pub key: String,
     pub value: String,

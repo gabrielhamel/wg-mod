@@ -63,28 +63,33 @@ impl NVM for LinuxOrMacOsNVM {
     fn install_node(&self) -> Result<(), NVMError> {
         println!("Installing Node via nvm...");
 
-        self.exec(vec!["install", "node"], vec![])?;
+        self.exec(vec!["install", "node"])?;
 
         Ok(())
     }
 
-    fn exec(
-        &self, args: Vec<&str>, envs: Vec<Env>,
-    ) -> Result<Output, NVMError> {
+    fn current_node_version(&self) -> Result<String, NVMError> {
+        let out = self.exec(vec!["current"])?;
+
+        Ok(String::from_utf8(out.stdout)
+            .map_err(|_| NVMError::ExecCurrentError)?
+            .trim()
+            .to_string())
+    }
+
+    fn exec(&self, args: Vec<&str>) -> Result<Output, NVMError> {
         let executable_path = self.get_executable_path();
         let executable = &executable_path.to_string()?;
+
         let mut mutable_args = args.clone();
         mutable_args.insert(0, executable);
 
-        let nvm_dir_env = Env {
+        let env = vec![Env {
             key: "NVM_DIR".to_string(),
             value: self.nvm_path.to_string()?,
-        };
-        let mut mutable_envs = envs.clone();
-        mutable_envs.push(nvm_dir_env);
+        }];
 
-        command("bash", mutable_args, mutable_envs)
-            .map_err(|_| NVMError::ExecError)
+        command("bash", mutable_args, env).map_err(|_| NVMError::ExecError)
     }
 
     fn get_node(&self) -> Result<Box<dyn Node>, NVMError> {
