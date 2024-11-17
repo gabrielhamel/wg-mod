@@ -94,7 +94,7 @@ impl NVM for LinuxOrMacOsNVM {
             self.install_node()?;
         }
 
-        let current_version = self.nvm_current_version()?;
+        let current_version = self.current_node_version()?;
         let current_node_path = node_path.join(current_version);
 
         Ok(Box::new(LinuxOrMacNode::from(current_node_path)))
