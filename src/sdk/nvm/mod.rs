@@ -49,8 +49,17 @@ pub trait NVM {
             .map_err(|_| NVMError::ExecUseError)
     }
 
-    fn nvm_current_version(&self) -> Result<String, NVMError> {
+    fn current_node_version(&self) -> Result<String, NVMError> {
         let out = self.exec(vec!["current"], vec![])?;
+        Ok(String::from_utf8(out.stdout)
+            .map_err(|_| NVMError::ExecCurrentError)?
+            .trim()
+            .to_string())
+    }
+
+    fn version(&self) -> Result<String, NVMError> {
+        let out = self.exec(vec!["--version"], vec![])?;
+
         Ok(String::from_utf8(out.stdout)
             .map_err(|_| NVMError::ExecCurrentError)?
             .trim()
@@ -91,4 +100,24 @@ pub fn load_nvm(nvm_path: &PathBuf) -> Result<BoxedNVM, NVMError> {
     };
 
     Ok(nvm)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use regex::Regex;
+    use tempfile::tempdir;
+
+    #[test]
+    fn install() {
+        let tmp_dir = tempdir().unwrap();
+        let tmp_dir_path = tmp_dir.path().to_path_buf();
+        let nvm_path = tmp_dir_path.join("nvm");
+
+        let nvm = load_nvm(&nvm_path).unwrap();
+        let version = nvm.version().unwrap();
+
+        let semantic_version_pattern = Regex::new("^([0-9]+)\\.([0-9]+)\\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+)?$").unwrap();
+        assert!(semantic_version_pattern.is_match(&version));
+    }
 }
