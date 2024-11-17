@@ -30,19 +30,24 @@ impl StringValidator for PatternValidator {
     }
 }
 
-#[test]
-fn pattern_validator() {
-    let validator = PatternValidator::new(
-        r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$",
-        "Must respect the semantic versioning",
-    )
-    .unwrap();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    assert_eq!(validator.validate("0.0.1").unwrap(), Validation::Valid);
-    assert_eq!(
-        validator.validate("Hello world").unwrap(),
-        Validation::Invalid(inquire::validator::ErrorMessage::Custom(
-            "Must respect the semantic versioning".to_owned()
-        ))
-    );
+    #[test]
+    fn pattern_validator() {
+        let validator = PatternValidator::new(
+            r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$",
+            "Must respect the semantic versioning",
+        )
+        .unwrap();
+
+        assert_eq!(validator.validate("0.0.1").unwrap(), Validation::Valid);
+        assert_eq!(
+            validator.validate("Hello world").unwrap(),
+            Validation::Invalid(inquire::validator::ErrorMessage::Custom(
+                "Must respect the semantic versioning".to_owned()
+            ))
+        );
+    }
 }
