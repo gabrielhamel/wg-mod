@@ -1,6 +1,7 @@
 use crate::config::{Configs, ConfigsError};
 use crate::sdk::as3::AS3;
 use crate::sdk::npm::{NPMError, NPM};
+use crate::sdk::nvm::{BoxedNVM, NVMError};
 use crate::sdk::{InstallResult, Installable};
 use crate::utils::command::command;
 use crate::utils::convert_pathbuf_to_string::Stringify;
@@ -13,8 +14,14 @@ pub enum ASConfigcError {
     #[error("Execution failed")]
     FailedExecution,
 
+    #[error("NVM error")]
+    NVMError(#[from] NVMError),
+
     #[error("NPM error")]
     NPMError(#[from] NPMError),
+
+    #[error("Install error")]
+    InstallError(String),
 }
 
 pub struct ASConfigc {
@@ -86,4 +93,18 @@ impl ASConfigc {
 
         Ok(())
     }
+}
+
+pub fn load_asconfigc(nvm: BoxedNVM) -> Result<ASConfigc, ASConfigcError> {
+    let node = nvm.get_node()?;
+    let npm = node.get_npm();
+    let asconfigc = ASConfigc::from(npm);
+
+    if !asconfigc.is_installed() {
+        asconfigc
+            .install()
+            .map_err(|e| ASConfigcError::InstallError(e))?;
+    }
+
+    Ok(asconfigc)
 }

@@ -2,14 +2,12 @@ mod settings;
 
 use crate::config::settings::Settings;
 use crate::sdk::as3::{AS3Error, AS3};
-use crate::sdk::asconfigc::ASConfigc;
+use crate::sdk::asconfigc::{ASConfigc, ASConfigcError};
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
 use crate::sdk::game_sources::{GameSources, GameSourcesError};
-use crate::sdk::nvm::linux_or_mac_os::LinuxOrMacOsNVM;
-use crate::sdk::nvm::windows::WindowsNVM;
-use crate::sdk::nvm::{NVMError, NVM};
-use crate::sdk::{conda, Installable};
+use crate::sdk::nvm::{BoxedNVM, NVMError};
+use crate::sdk::{as3, asconfigc, conda, nvm};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -34,11 +32,11 @@ pub enum ConfigsError {
     #[error("Invalid json\n{0}")]
     SettingsParseError(#[from] serde_json::Error),
 
-    #[error("Nvm config failed")]
-    ConfigNVMError(#[from] NVMError),
+    #[error("NVM error")]
+    NVMError(#[from] NVMError),
 
-    #[error("ASConfig loading error")]
-    ASConfigError,
+    #[error("ASConfigc loading error")]
+    ASConfigcError(#[from] ASConfigcError),
 }
 
 pub struct Configs {
@@ -90,6 +88,56 @@ impl Configs {
     }
 }
 
+fn load_asconfigc(wg_mod_home: &PathBuf) -> Result<ASConfigc, ConfigsError> {
+    let nvm = load_nvm(&wg_mod_home)?;
+    let asconfigc = asconfigc::load_asconfigc(nvm)?;
+
+    Ok(asconfigc)
+}
+
+fn load_game_sources(
+    wg_mod_home: &PathBuf,
+) -> Result<GameSources, ConfigsError> {
+    let game_sources_path = wg_mod_home.join("wot-src");
+    let game_sources = GameSources::load(&game_sources_path)?;
+
+    Ok(game_sources)
+}
+
+fn load_conda(wg_mod_home: &PathBuf) -> Result<Conda, ConfigsError> {
+    let conda_path = wg_mod_home.join("conda");
+    let conda = conda::load_conda(&conda_path)?;
+
+    Ok(conda)
+}
+
+fn load_as3(wg_mod_home: &PathBuf) -> Result<AS3, ConfigsError> {
+    let as3_path = wg_mod_home.join("as3");
+    let as3 = as3::load_as3(&as3_path)?;
+
+    Ok(as3)
+}
+
+fn load_nvm(wg_mod_home: &PathBuf) -> Result<BoxedNVM, ConfigsError> {
+    let nvm_path = wg_mod_home.join("nvm");
+    let nvm = nvm::load_nvm(&nvm_path)?;
+
+    Ok(nvm)
+}
+
+fn load_conda_environment(
+    wg_mod_home: &PathBuf,
+) -> Result<CondaEnvironment, ConfigsError> {
+    let conda = load_conda(wg_mod_home)?;
+
+    if !conda.has_environment("wg-mod") {
+        println!("Create conda env...");
+        conda.create_environment("wg-mod", "2")?;
+    }
+
+    Ok(conda.get_environment("wg-mod"))
+}
+
 fn create_default_settings_file(path: &PathBuf) -> Result<(), ConfigsError> {
     let mut file = File::create(path).map_err(|e| {
         ConfigsError::SettingsError(format!(
@@ -104,22 +152,6 @@ fn create_default_settings_file(path: &PathBuf) -> Result<(), ConfigsError> {
     })?;
 
     Ok(())
-}
-
-fn load_asconfigc(wg_mod_home: &PathBuf) -> Result<ASConfigc, ConfigsError> {
-    let nvm = load_nvm(&wg_mod_home)?;
-    let node = nvm.get_node()?;
-    let npm = node.get_npm();
-    let asconfigc = ASConfigc::from(npm);
-
-    if !asconfigc.is_installed() {
-        asconfigc.install().map_err(|e| {
-            eprintln!("{}", e);
-            ConfigsError::ASConfigError
-        })?;
-    }
-
-    Ok(asconfigc)
 }
 
 fn load_settings(wg_mod_home: &PathBuf) -> Result<Settings, ConfigsError> {
@@ -138,73 +170,4 @@ fn load_settings(wg_mod_home: &PathBuf) -> Result<Settings, ConfigsError> {
     let settings: Settings = serde_json::from_reader(file)?;
 
     Ok(settings)
-}
-
-fn load_game_sources(
-    wg_mod_home: &PathBuf,
-) -> Result<GameSources, ConfigsError> {
-    let game_sources_path = wg_mod_home.join("wot-src");
-    let game_sources = GameSources::load(&game_sources_path)?;
-
-    Ok(game_sources)
-}
-
-fn load_conda_environment(
-    wg_mod_home: &PathBuf,
-) -> Result<CondaEnvironment, ConfigsError> {
-    let conda = get_conda(wg_mod_home)?;
-
-    if !conda.has_environment("wg-mod") {
-        println!("Create conda env...");
-        conda.create_environment("wg-mod", "2")?;
-    }
-
-    Ok(conda.get_environment("wg-mod"))
-}
-
-fn get_conda(wg_mod_home: &PathBuf) -> Result<Conda, ConfigsError> {
-    let conda_path = wg_mod_home.join("conda");
-    let conda = Conda::from(conda_path);
-
-    if !conda.is_installed() {
-        println!("Installing conda...");
-        conda.install().expect("failed conda installation");
-    }
-
-    Ok(conda)
-}
-
-fn load_as3(wg_mod_home: &PathBuf) -> Result<AS3, AS3Error> {
-    let as3_path = wg_mod_home.join("as3");
-    let as3 = AS3::from(as3_path);
-
-    if !as3.is_installed() {
-        println!("Installing action script SDK...");
-        as3.install().expect("failed s3 installation");
-    }
-    Ok(as3)
-}
-
-fn load_nvm(wg_mod_home: &PathBuf) -> Result<Box<dyn NVM>, ConfigsError> {
-    let nvm_path = wg_mod_home.join("nvm");
-    let nvm_destination = nvm_path.clone();
-
-    let nvm_installer: Box<dyn Installable> = if cfg!(target_os = "windows") {
-        Box::new(WindowsNVM::from(nvm_destination))
-    } else {
-        Box::new(LinuxOrMacOsNVM::from(nvm_destination))
-    };
-
-    if !nvm_installer.is_installed() {
-        println!("Install nvm ...");
-        nvm_installer.install().expect("failed ton install nvm");
-    }
-
-    let nvm: Box<dyn NVM> = if cfg!(target_os = "windows") {
-        Box::new(WindowsNVM::from(nvm_path))
-    } else {
-        Box::new(LinuxOrMacOsNVM::from(nvm_path))
-    };
-
-    Ok(nvm)
 }

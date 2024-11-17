@@ -43,9 +43,11 @@ pub struct Conda {
     conda_path: PathBuf,
 }
 
-impl From<PathBuf> for Conda {
-    fn from(path: PathBuf) -> Self {
-        Self { conda_path: path }
+impl From<&PathBuf> for Conda {
+    fn from(conda_path: &PathBuf) -> Self {
+        Self {
+            conda_path: conda_path.clone(),
+        }
     }
 }
 
@@ -129,4 +131,15 @@ impl Installable for Conda {
             install_conda(&self.conda_path).map_err(|error| error.to_string())
         }
     }
+}
+
+pub fn load_conda(conda_path: &PathBuf) -> Result<Conda, CondaError> {
+    let conda = Conda::from(conda_path);
+
+    if !conda.is_installed() {
+        println!("Installing conda...");
+        conda.install().expect("failed conda installation");
+    }
+
+    Ok(conda)
 }

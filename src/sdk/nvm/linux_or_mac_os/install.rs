@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use std::process::Command;
 
 pub fn install_nvm_sdk(nvm_path: &PathBuf) -> Result<(), NVMError> {
-    create_nvm_directory(nvm_path).map_err(|_| NVMError::InstallError)?;
+    create_nvm_directory(nvm_path)
+        .map_err(|e| NVMError::InstallError(e.to_string()))?;
     let downloaded_file_path = nvm_path.join("install.sh");
     let downloaded_file = downloaded_file_path.to_string()?;
 
@@ -14,15 +15,17 @@ pub fn install_nvm_sdk(nvm_path: &PathBuf) -> Result<(), NVMError> {
         "https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh",
         &downloaded_file,
     )
-    .map_err(|_| NVMError::DownloadError)?;
+    .map_err(|e| NVMError::DownloadError(e.to_string()))?;
 
     let mut command = Command::new("bash");
     command.arg(&downloaded_file).env("NVM_DIR", nvm_path);
 
-    let _ = command.output().map_err(|_| NVMError::InstallError)?;
+    let _ = command
+        .output()
+        .map_err(|e| NVMError::InstallError(e.to_string()))?;
 
     fs::remove_file(&downloaded_file_path)
-        .map_err(|_| NVMError::InstallError)?;
+        .map_err(|e| NVMError::InstallError(e.to_string()))?;
 
     Ok(())
 }
