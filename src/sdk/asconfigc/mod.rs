@@ -1,7 +1,11 @@
+use crate::config::{Configs, ConfigsError};
+use crate::sdk::as3::AS3;
 use crate::sdk::npm::{NPMError, NPM};
 use crate::sdk::{InstallResult, Installable};
 use crate::utils::command::command;
+use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::Env;
+use std::path::PathBuf;
 use std::process::Output;
 
 #[derive(thiserror::Error, Debug)]
@@ -59,5 +63,26 @@ impl ASConfigc {
 
         command(executable, args, envs)
             .map_err(|_| ASConfigcError::FailedExecution)
+    }
+
+    pub fn compile_all(
+        &self, input_path: &PathBuf,
+    ) -> Result<(), ASConfigcError> {
+        let config =
+            Configs::load().map_err(|_| ASConfigcError::FailedExecution)?;
+        let as3_sdk_path = config.as3.get_as3_path();
+        let as3_sdk_path_string = as3_sdk_path
+            .to_str()
+            .ok_or(ASConfigcError::FailedExecution)?;
+
+        let input_path_string =
+            input_path.to_str().ok_or(ASConfigcError::FailedExecution)?;
+
+        let _ = self.exec(
+            vec!["--sdk", as3_sdk_path_string, "-p", input_path_string],
+            vec![],
+        )?;
+
+        Ok(())
     }
 }

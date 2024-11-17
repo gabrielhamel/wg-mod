@@ -2,11 +2,11 @@ use crate::config::{Configs, ConfigsError};
 use crate::sdk::conda::environment::{CondaEnvironment, CondaEnvironmentError};
 use crate::sdk::conda::CondaError;
 use crate::utils::copy_directory::{copy_directory, CopyDirectoryError};
+use crate::utils::tmp_dir::{prepare_tmp_directory, TempDirError};
 use glob::glob;
 use std::fs::{create_dir_all, remove_file};
 use std::io;
 use std::path::PathBuf;
-use tempfile::tempdir;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PythonBuilderError {
@@ -36,6 +36,9 @@ pub enum PythonBuilderError {
 
     #[error("Can't copy or create files\n{0}")]
     WriteFilesError(io::Error),
+
+    #[error("Tempory directory usage failed")]
+    TempDirError(#[from] TempDirError),
 }
 
 pub struct PythonBuilder {
@@ -54,7 +57,7 @@ impl PythonBuilder {
     pub fn build(
         &self, source: &PathBuf, destination: &PathBuf,
     ) -> Result<(), PythonBuilderError> {
-        let (close_tmp_dir, tmp_dir_path) = self.prepare_tmp_directory()?;
+        let (close_tmp_dir, tmp_dir_path) = prepare_tmp_directory()?;
 
         copy_directory(source, &tmp_dir_path)?;
 
@@ -67,19 +70,6 @@ impl PythonBuilder {
         close_tmp_dir()?;
 
         Ok(())
-    }
-
-    fn prepare_tmp_directory(
-        &self,
-    ) -> Result<(impl FnOnce() -> io::Result<()>, PathBuf), PythonBuilderError>
-    {
-        let tmp_dir = tempdir()?;
-        let path = tmp_dir.path();
-        let path_buf = path.to_path_buf();
-
-        let close_tmp_dir = move || tmp_dir.close();
-
-        Ok((close_tmp_dir, path_buf))
     }
 
     fn delete_all_sources(
