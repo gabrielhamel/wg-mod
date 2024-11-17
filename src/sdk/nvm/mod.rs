@@ -2,6 +2,9 @@ pub mod linux_or_mac_os;
 pub mod windows;
 
 use crate::sdk::node::{Node, NodeError};
+use crate::sdk::nvm::linux_or_mac_os::LinuxOrMacOsNVM;
+use crate::sdk::nvm::windows::WindowsNVM;
+use crate::sdk::Installable;
 use crate::utils::convert_pathbuf_to_string::PathBufToStringError;
 use crate::utils::Env;
 use std::fs::create_dir_all;
@@ -12,9 +15,9 @@ use std::string::FromUtf8Error;
 #[derive(thiserror::Error, Debug)]
 pub enum NVMError {
     #[error("nvm install failed")]
-    InstallError,
+    InstallError(String),
     #[error("Download nvm install binary failed")]
-    DownloadError,
+    DownloadError(String),
     #[error("node install failed")]
     InstallNodeError(#[from] NodeError),
     #[error("Failed to create NVM directory ")]
@@ -55,7 +58,7 @@ pub trait NVM {
     }
 }
 
-pub fn create_nvm_directory(nvm_path: &PathBuf) -> Result<(), NVMError> {
+fn create_nvm_directory(nvm_path: &PathBuf) -> Result<(), NVMError> {
     if !nvm_path.exists() {
         create_dir_all(nvm_path).map_err(|_| NVMError::CreateNVMDirectory)?;
     } else {
@@ -63,4 +66,29 @@ pub fn create_nvm_directory(nvm_path: &PathBuf) -> Result<(), NVMError> {
     }
 
     Ok(())
+}
+
+pub type BoxedNVM = Box<dyn NVM>;
+
+pub fn load_nvm(nvm_path: &PathBuf) -> Result<BoxedNVM, NVMError> {
+    let nvm_installer: Box<dyn Installable> = if cfg!(target_os = "windows") {
+        Box::new(WindowsNVM::from(nvm_path))
+    } else {
+        Box::new(LinuxOrMacOsNVM::from(nvm_path))
+    };
+
+    if !nvm_installer.is_installed() {
+        println!("Install nvm ...");
+        nvm_installer
+            .install()
+            .map_err(|e| NVMError::InstallError(e))?;
+    }
+
+    let nvm: BoxedNVM = if cfg!(target_os = "windows") {
+        Box::new(WindowsNVM::from(nvm_path))
+    } else {
+        Box::new(LinuxOrMacOsNVM::from(nvm_path))
+    };
+
+    Ok(nvm)
 }
