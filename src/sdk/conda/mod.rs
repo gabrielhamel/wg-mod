@@ -114,6 +114,12 @@ impl Conda {
 
         environment_path.exists()
     }
+
+    pub fn version(&self) -> Result<String, CondaError> {
+        let (out, _) = self.command(vec!["--version"])?;
+
+        Ok(out.trim().to_string())
+    }
 }
 
 impl Installable for Conda {
@@ -142,4 +148,24 @@ pub fn load_conda(conda_path: &PathBuf) -> Result<Conda, CondaError> {
     }
 
     Ok(conda)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use regex::Regex;
+    use tempfile::tempdir;
+
+    #[test]
+    fn install_conda() {
+        let tmp_dir = tempdir().unwrap();
+        let tmp_dir_path = tmp_dir.path().to_path_buf();
+        let conda_path = tmp_dir_path.join("conda");
+
+        let conda = load_conda(&conda_path).unwrap();
+        let version = conda.version().unwrap();
+
+        let semantic_version_pattern = Regex::new("^conda ([0-9]+)\\.([0-9]+)\\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+)?$").unwrap();
+        assert!(semantic_version_pattern.is_match(&version));
+    }
 }
