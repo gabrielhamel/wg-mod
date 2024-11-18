@@ -32,9 +32,6 @@ jobs:
           path: target
           key: ${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
 
-      - name: Build
-        run: cargo build --verbose
-
       - name: Tests
         run: cargo test --verbose
 
@@ -50,9 +47,6 @@ jobs:
           path: target
           key: ${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
 
-      - name: Build
-        run: cargo build --verbose
-
       - name: Tests
         run: cargo test --verbose
 
@@ -67,9 +61,6 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
-
-      - name: Build
-        run: cargo build --verbose
 
       - name: Tests
         run: cargo test --verbose
