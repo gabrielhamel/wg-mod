@@ -1,4 +1,5 @@
 use crate::utils::Env;
+use std::ffi::OsStr;
 use std::io;
 use std::process::{Command, Output};
 
@@ -8,8 +9,8 @@ pub enum Error {
     ExecutionError(#[from] io::Error),
 }
 
-pub fn command(
-    command: &str, args: Vec<&str>, env: Vec<Env>,
+pub fn command<S: AsRef<OsStr>>(
+    command: S, args: Vec<&str>, env: Vec<Env>,
 ) -> Result<Output, Error> {
     let mut command = Command::new(command);
     command.args(args);

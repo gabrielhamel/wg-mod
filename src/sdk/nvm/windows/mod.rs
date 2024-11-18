@@ -58,7 +58,7 @@ impl NVM for WindowsNVM {
 
     fn exec(&self, args: Vec<&str>) -> Result<Output, NVMError> {
         let executable = self.get_executable_path();
-        let executable_str = executable.to_str().ok_or(NVMError::ExecError)?;
+        let executable_str = executable.as_os_str();
 
         let env = vec![Env {
             key: "NVM_HOME".to_string(),

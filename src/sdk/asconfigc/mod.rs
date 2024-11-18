@@ -3,13 +3,14 @@ use crate::sdk::as3::AS3;
 use crate::sdk::npm::{NPMError, NPM};
 use crate::sdk::nvm::{BoxedNVM, NVMError};
 use crate::sdk::{InstallResult, Installable};
-use crate::utils::command::command;
 use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::{command, Env};
-use std::path::PathBuf;
+use std::fs::read_dir;
+use std::path::{Path, PathBuf};
 use std::process;
 use std::process::Output;
 use std::string::FromUtf8Error;
+use crate::utils::command::command;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ASConfigcError {
@@ -30,9 +31,6 @@ pub enum ASConfigcError {
 
     #[error("Unable to decode output of the command")]
     DecodeOutputError(#[from] FromUtf8Error),
-
-    #[error("Path error")]
-    InvalidPathError,
 }
 
 pub struct ASConfigc {
@@ -68,16 +66,18 @@ impl From<NPM> for ASConfigc {
 impl ASConfigc {
     fn exec(&self, args: Vec<&str>) -> Result<process::Output, ASConfigcError> {
         let bin_dir = self.npm.get_bin_directory()?;
-        let exec_path = if cfg!(target_os = "windows") {
-            bin_dir.join("asconfigc.cmd")
+        let mut args_override = args.clone();
+        let exec_path: PathBuf;
+
+        if cfg!(target_os = "windows") {
+            exec_path = bin_dir.join("npx.cmd");
+            args_override.insert(0, "asconfigc");
         } else {
-            bin_dir.join("asconfigc")
+            exec_path = bin_dir.join("asconfigc");
         };
 
-        let executable =
-            exec_path.to_str().ok_or(ASConfigcError::InvalidPathError)?;
-
-        let output = command(executable, args, vec![])
+        let executable = exec_path.as_os_str();
+        let output = command(executable, args_override, vec![])
             .map_err(ASConfigcError::ExecutionError)?;
 
         if !output.status.success() {
@@ -107,6 +107,27 @@ pub fn load_asconfigc(nvm: BoxedNVM) -> Result<ASConfigc, ASConfigcError> {
     }
 
     Ok(asconfigc)
+}
+
+fn recurse_files(path: impl AsRef<Path>) -> std::io::Result<Vec<PathBuf>> {
+    let mut buf = vec![];
+    let entries = read_dir(path)?;
+
+    for entry in entries {
+        let entry = entry?;
+        let meta = entry.metadata()?;
+
+        if meta.is_dir() {
+            let mut subdir = recurse_files(entry.path())?;
+            buf.append(&mut subdir);
+        }
+
+        if meta.is_file() {
+            buf.push(entry.path());
+        }
+    }
+
+    Ok(buf)
 }
 
 #[cfg(test)]
