@@ -23,8 +23,8 @@ impl Node for LinuxOrMacNode {
         let binaries_path = self.node_path.join("bin");
         let node_exec_path = binaries_path.join("node");
 
-        let executable =
-            node_exec_path.to_str().ok_or(NodeError::FailedExecution)?;
+        let executable = node_exec_path.as_os_str();
+
         command(executable, args, vec![])
             .map_err(|_| NodeError::FailedExecution)
     }

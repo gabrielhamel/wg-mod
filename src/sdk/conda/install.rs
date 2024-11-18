@@ -2,6 +2,7 @@ use crate::sdk::conda::CondaError;
 use crate::utils::downloader::download_file;
 use std::fs;
 use std::fs::create_dir_all;
+use std::io::{stderr, stdout};
 use std::path::PathBuf;
 use std::process::{Command, Output};
 
@@ -18,7 +19,8 @@ pub fn install_conda(destination: &PathBuf) -> Result<(), CondaError> {
 
     let install_destination =
         destination.to_str().ok_or(CondaError::PathError)?;
-    if cfg!(target_os = "windows") {
+
+    let install_result = if cfg!(target_os = "windows") {
         install_on_windows(&install_script_destination, install_destination)?
     } else {
         install_on_linux_and_macos(
@@ -26,6 +28,19 @@ pub fn install_conda(destination: &PathBuf) -> Result<(), CondaError> {
             install_destination,
         )?
     };
+
+    if !install_result.status.success() {
+        eprintln!("status: {}", install_result.status);
+        eprintln!(
+            "stdout: {}",
+            String::from_utf8_lossy(&install_result.stdout)
+        );
+        eprintln!(
+            "stderr: {}",
+            String::from_utf8_lossy(&install_result.stderr)
+        );
+        return Err(CondaError::NotInstalledError);
+    }
 
     fs::remove_file(install_script_destination)
         .map_err(CondaError::InstallError)?;

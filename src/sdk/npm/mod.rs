@@ -28,8 +28,7 @@ impl From<PathBuf> for NPM {
 
 impl NPM {
     fn exec(&self, args: Vec<&str>) -> Result<Output, NPMError> {
-        let executable =
-            self.npm_bin.to_str().ok_or(NPMError::FailedExecution)?;
+        let executable = self.npm_bin.as_os_str();
 
         let env = vec![
             (Env {
