@@ -21,8 +21,7 @@ impl Node for WindowsNode {
 
     fn exec(&self, args: Vec<&str>) -> Result<Output, NodeError> {
         let node_exec_path = self.node_path.join("node");
-        let executable =
-            node_exec_path.to_str().ok_or(NodeError::FailedExecution)?;
+        let executable = node_exec_path.as_os_str();
 
         command(executable, args, vec![]).map_err(|e| {
             eprintln!("{}", e);
