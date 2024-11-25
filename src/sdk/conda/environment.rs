@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 use std::process::{Command, Output};
+use std::result;
 use std::str::Utf8Error;
 
 #[derive(thiserror::Error, Debug)]
-pub enum CondaEnvironmentError {
+pub enum Error {
     #[error("Can't invoke command: {0}")]
     CommandInvocationError(PathBuf),
 
@@ -16,6 +17,8 @@ pub enum CondaEnvironmentError {
     #[error("Unable to reads sources directory")]
     PathError,
 }
+
+type Result<T> = result::Result<T, Error>;
 
 pub struct CondaEnvironment {
     environment_path: PathBuf,
@@ -30,35 +33,31 @@ impl From<PathBuf> for CondaEnvironment {
 }
 
 impl CondaEnvironment {
-    pub fn compile_all(
-        &self, directory: &PathBuf,
-    ) -> Result<(), CondaEnvironmentError> {
-        let python_src =
-            directory.to_str().ok_or(CondaEnvironmentError::PathError)?;
+    pub fn compile_all(&self, directory: &PathBuf) -> Result<()> {
+        let python_src = directory.to_str().ok_or(Error::PathError)?;
 
         self.python(vec!["-m", "compileall", python_src])?;
 
         Ok(())
     }
 
-    fn python(
-        &self, args: Vec<&str>,
-    ) -> Result<(String, String), CondaEnvironmentError> {
+    fn python(&self, args: Vec<&str>) -> Result<(String, String)> {
         self.command("python", args)
     }
 
     fn command(
         &self, executable_name: &str, args: Vec<&str>,
-    ) -> Result<(String, String), CondaEnvironmentError> {
+    ) -> Result<(String, String)> {
         let executable_path = self.get_executable_path(executable_name);
         let mut command = Command::new(&executable_path);
 
-        let output = command.args(args).output().map_err(|_| {
-            CondaEnvironmentError::CommandInvocationError(executable_path)
-        })?;
+        let output = command
+            .args(args)
+            .output()
+            .map_err(|_| Error::CommandInvocationError(executable_path))?;
 
         if !output.status.success() {
-            return Err(CondaEnvironmentError::CommandError(output));
+            return Err(Error::CommandError(output));
         }
 
         let stdout = std::str::from_utf8(&output.stdout)?.to_string();

@@ -1,8 +1,8 @@
 use crate::sdk::node::windows::WindowsNode;
 use crate::sdk::node::Node;
 use crate::sdk::nvm::windows::install::install_nvm_windows;
-use crate::sdk::nvm::{NVMError, NVM};
-use crate::sdk::{InstallResult, Installable};
+use crate::sdk::nvm::NVM;
+use crate::sdk::{nvm, InstallResult, Installable};
 use crate::utils::command::command;
 use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::Env;
@@ -44,19 +44,19 @@ impl Installable for WindowsNVM {
 }
 
 impl NVM for WindowsNVM {
-    fn install_node(&self) -> Result<(), NVMError> {
+    fn install_node(&self) -> nvm::Result<()> {
         println!("Installing Node via nvm...");
 
         let args = vec!["install", "latest"];
         self.exec(args)
-            .map_err(|e| NVMError::InstallError(e.to_string()))?;
+            .map_err(|e| nvm::Error::InstallError(e.to_string()))?;
 
         self.nvm_use("latest")?;
 
         Ok(())
     }
 
-    fn exec(&self, args: Vec<&str>) -> Result<Output, NVMError> {
+    fn exec(&self, args: Vec<&str>) -> nvm::Result<Output> {
         let executable = self.get_executable_path();
         let executable_str = executable.as_os_str();
 
@@ -65,10 +65,10 @@ impl NVM for WindowsNVM {
             value: self.nvm_path.to_string()?,
         }];
 
-        command(executable_str, args, env).map_err(|_| NVMError::ExecError)
+        command(executable_str, args, env).map_err(|_| nvm::Error::ExecError)
     }
 
-    fn get_node(&self) -> Result<Box<dyn Node>, NVMError> {
+    fn get_node(&self) -> nvm::Result<Box<dyn Node>> {
         let mut version = self.current_node_version()?;
         let mut node_path = self.nvm_path.join(version);
 
@@ -82,14 +82,14 @@ impl NVM for WindowsNVM {
         Ok(Box::new(WindowsNode::from(node_path)))
     }
 
-    fn current_node_version(&self) -> Result<String, NVMError> {
+    fn current_node_version(&self) -> nvm::Result<String> {
         let out = self.exec(vec!["list", "installed"])?;
         if !out.status.success() {
-            return Err(NVMError::ExecError);
+            return Err(nvm::Error::ExecError);
         }
 
         let stdout = String::from_utf8(out.stdout)
-            .map_err(|_| NVMError::ExecCurrentError)?
+            .map_err(|_| nvm::Error::ExecCurrentError)?
             .trim()
             .to_string()
             .replace("* ", "")

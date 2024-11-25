@@ -1,13 +1,13 @@
 pub mod template;
 mod tests;
 
-use crate::utils::file_template::TemplateError;
+use crate::utils::file_template;
 use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
-pub enum NewError {
+pub enum Error {
     #[error("Unable to create this template file")]
-    FileTemplateError(#[from] TemplateError),
+    FileTemplateError(#[from] file_template::Error),
 }
 
 #[derive(Debug, Clone, PartialEq)]

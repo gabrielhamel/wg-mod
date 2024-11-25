@@ -2,8 +2,8 @@ use crate::new::template::create_nvm_executable;
 use crate::sdk::node::linux_or_macos::LinuxOrMacNode;
 use crate::sdk::node::Node;
 use crate::sdk::nvm::linux_or_mac_os::install::install_nvm_sdk;
-use crate::sdk::nvm::{NVMError, NVM};
-use crate::sdk::{InstallResult, Installable};
+use crate::sdk::nvm::NVM;
+use crate::sdk::{nvm, InstallResult, Installable};
 use crate::utils::command::command;
 use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::Env;
@@ -33,13 +33,13 @@ impl LinuxOrMacOsNVM {
         self.nvm_path.join(self.get_executable_name())
     }
 
-    fn prepare(&self) -> Result<(), NVMError> {
+    fn prepare(&self) -> nvm::Result<()> {
         install_nvm_sdk(&self.nvm_path)?;
         create_nvm_executable(
             &self.nvm_path,
             self.get_executable_name().as_str(),
         )
-        .map_err(|e| NVMError::InstallError(e.to_string()))?;
+        .map_err(|e| nvm::Error::InstallError(e.to_string()))?;
 
         Ok(())
     }
@@ -60,7 +60,7 @@ impl Installable for LinuxOrMacOsNVM {
 }
 
 impl NVM for LinuxOrMacOsNVM {
-    fn install_node(&self) -> Result<(), NVMError> {
+    fn install_node(&self) -> nvm::Result<()> {
         println!("Installing Node via nvm...");
 
         self.exec(vec!["install", "node"])?;
@@ -68,16 +68,16 @@ impl NVM for LinuxOrMacOsNVM {
         Ok(())
     }
 
-    fn current_node_version(&self) -> Result<String, NVMError> {
+    fn current_node_version(&self) -> nvm::Result<String> {
         let out = self.exec(vec!["current"])?;
 
         Ok(String::from_utf8(out.stdout)
-            .map_err(|_| NVMError::ExecCurrentError)?
+            .map_err(|_| nvm::Error::ExecCurrentError)?
             .trim()
             .to_string())
     }
 
-    fn exec(&self, args: Vec<&str>) -> Result<Output, NVMError> {
+    fn exec(&self, args: Vec<&str>) -> nvm::Result<Output> {
         let executable_path = self.get_executable_path();
         let executable = &executable_path.to_string()?;
 
@@ -89,10 +89,10 @@ impl NVM for LinuxOrMacOsNVM {
             value: self.nvm_path.to_string()?,
         }];
 
-        command("bash", mutable_args, env).map_err(|_| NVMError::ExecError)
+        command("bash", mutable_args, env).map_err(|_| nvm::Error::ExecError)
     }
 
-    fn get_node(&self) -> Result<Box<dyn Node>, NVMError> {
+    fn get_node(&self) -> nvm::Result<Box<dyn Node>> {
         let node_path = self.nvm_path.join("versions").join("node");
 
         if !node_path.exists() {

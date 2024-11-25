@@ -5,12 +5,12 @@ use git2::{
 };
 use inquire::Select;
 use std::fs::create_dir_all;
-use std::io;
 use std::io::Write;
 use std::path::{PathBuf, MAIN_SEPARATOR};
+use std::{io, result};
 
 #[derive(thiserror::Error, Debug)]
-pub enum GameSourcesError {
+pub enum Error {
     #[error("Unable to create directory\n{0}")]
     CreateDirectoryError(io::Error),
 
@@ -30,11 +30,13 @@ pub enum GameSourcesError {
     FilesystemError(#[from] fs_extra::error::Error),
 }
 
+type Result<T> = result::Result<T, Error>;
+
 pub struct GameSources {
     repository: Repository,
 }
 
-fn fetch(remote: &mut Remote) -> Result<(), GameSourcesError> {
+fn fetch(remote: &mut Remote) -> Result<()> {
     let mut cb = RemoteCallbacks::new();
     cb.transfer_progress(|stats| {
         let download_progress = 100_f32 * stats.received_objects() as f32
@@ -64,10 +66,9 @@ fn fetch(remote: &mut Remote) -> Result<(), GameSourcesError> {
 
 fn get_repository(
     path: &PathBuf, need_to_be_initialized: bool,
-) -> Result<Repository, GameSourcesError> {
+) -> Result<Repository> {
     let repository = if need_to_be_initialized {
-        create_dir_all(&path)
-            .map_err(GameSourcesError::CreateDirectoryError)?;
+        create_dir_all(&path).map_err(Error::CreateDirectoryError)?;
         Repository::init(&path)?
     } else {
         Repository::open(&path)?
@@ -78,7 +79,7 @@ fn get_repository(
 
 fn get_default_remote(
     repository: &Repository, need_to_be_initialized: bool,
-) -> Result<Remote, GameSourcesError> {
+) -> Result<Remote> {
     let wot_src_remote_url = "https://github.com/IzeBerg/wot-src.git";
     let remote = if need_to_be_initialized {
         repository.remote("origin", wot_src_remote_url)?
@@ -90,7 +91,7 @@ fn get_default_remote(
 }
 
 impl GameSources {
-    pub fn load(path: &PathBuf) -> Result<Self, GameSourcesError> {
+    pub fn load(path: &PathBuf) -> Result<Self> {
         let already_exists = path.exists();
 
         let repository = get_repository(&path, !already_exists)?;
@@ -109,20 +110,19 @@ impl GameSources {
         Ok(game_sources)
     }
 
-    fn list_channels(&self) -> Result<Vec<String>, GameSourcesError> {
+    fn list_channels(&self) -> Result<Vec<String>> {
         let branches_options = Some(BranchType::Remote);
         let it = self.repository.branches(branches_options)?;
         let mut branches: Vec<String> = vec![];
 
-        let branches_result: Vec<Result<(Branch, BranchType), git2::Error>> =
-            it.collect();
+        let branches_result: Vec<
+            result::Result<(Branch, BranchType), git2::Error>,
+        > = it.collect();
 
         for branch_result in branches_result {
             let (branch, _) = branch_result?;
-            let branch_name = branch
-                .name()?
-                .ok_or(GameSourcesError::GitBranchError)?
-                .to_string();
+            let branch_name =
+                branch.name()?.ok_or(Error::GitBranchError)?.to_string();
             let short_branch_name = branch_name.replace("origin/", "");
             branches.push(short_branch_name);
         }
@@ -130,7 +130,7 @@ impl GameSources {
         Ok(branches)
     }
 
-    pub fn prompt_channel(&self) -> Result<(), GameSourcesError> {
+    pub fn prompt_channel(&self) -> Result<()> {
         let channels_available = self.list_channels()?;
         let channel_selected = Select::new(
             "Select a World of Tanks development channel:",
@@ -143,24 +143,22 @@ impl GameSources {
         Ok(())
     }
 
-    fn switch_channel(
-        &self, channel_name: &str,
-    ) -> Result<(), GameSourcesError> {
+    fn switch_channel(&self, channel_name: &str) -> Result<()> {
         let branch_name = format!("origin/{channel_name}");
         let (object, reference) = self.repository.revparse_ext(&branch_name)?;
 
         self.repository.checkout_tree(&object, None)?;
         match reference {
-            | Some(reference) => self.repository.set_head(
-                reference.name().ok_or(GameSourcesError::GitBranchError)?,
-            ),
+            | Some(reference) => self
+                .repository
+                .set_head(reference.name().ok_or(Error::GitBranchError)?),
             | None => self.repository.set_head_detached(object.id()),
         }?;
 
         Ok(())
     }
 
-    pub fn get_channel(&self) -> Result<String, GameSourcesError> {
+    pub fn get_channel(&self) -> Result<String> {
         let current_commit = self.repository.head()?.peel_to_commit()?;
         let references = self.repository.references()?;
 
@@ -172,7 +170,7 @@ impl GameSources {
                     {
                         return Ok(reference
                             .name()
-                            .ok_or(GameSourcesError::GitBranchError)?
+                            .ok_or(Error::GitBranchError)?
                             .to_string()
                             .replace("refs/heads/", "")
                             .replace("refs/remotes/origin/", ""));
@@ -181,12 +179,10 @@ impl GameSources {
             }
         }
 
-        Err(GameSourcesError::GitBranchError)
+        Err(Error::GitBranchError)
     }
 
-    fn list_directory_paths(
-        &self, path: &PathBuf,
-    ) -> Result<Vec<String>, GameSourcesError> {
+    fn list_directory_paths(&self, path: &PathBuf) -> Result<Vec<String>> {
         let directory_content = get_dir_content(path)?;
         let folders = directory_content.directories;
 
@@ -194,9 +190,9 @@ impl GameSources {
             .iter()
             .map(|p| {
                 convert_to_absolute_path(&PathBuf::from(p))
-                    .map_err(|_| GameSourcesError::PathError)
+                    .map_err(|_| Error::PathError)
             })
-            .collect::<Result<Vec<String>, GameSourcesError>>()?;
+            .collect::<Result<Vec<String>>>()?;
 
         Ok(cleaned_path)
     }
@@ -208,14 +204,9 @@ impl GameSources {
                 .ends_with(&format!("scripts{}client_common", MAIN_SEPARATOR))
     }
 
-    pub fn list_python_root_modules(
-        &self,
-    ) -> Result<Vec<String>, GameSourcesError> {
-        let sources_path = self
-            .repository
-            .path()
-            .parent()
-            .ok_or(GameSourcesError::PathError)?;
+    pub fn list_python_root_modules(&self) -> Result<Vec<String>> {
+        let sources_path =
+            self.repository.path().parent().ok_or(Error::PathError)?;
         let python_sources_path = sources_path.join("sources/res");
         let sub_paths = self.list_directory_paths(&python_sources_path)?;
 

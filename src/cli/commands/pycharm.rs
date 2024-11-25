@@ -1,20 +1,25 @@
-use crate::cli::command::{CommandError, RunnableCommand};
-use crate::config::{Configs, ConfigsError};
-use crate::sdk::game_sources::GameSourcesError;
+use crate::cli::command;
+use crate::cli::command::RunnableCommand;
+use crate::config;
+use crate::config::Configs;
+use crate::sdk::game_sources;
 use clap::{ArgMatches, Command};
+use std::result;
 
 #[derive(thiserror::Error, Debug)]
-pub enum PycharmCommandError {
+pub enum Error {
     #[error("Failed to load modding tools\n{0}")]
-    ConfigsError(#[from] ConfigsError),
+    ConfigsError(#[from] config::Error),
 
     #[error("Failed to use build tools\n{0}")]
-    GameSourceError(#[from] GameSourcesError),
+    GameSourceError(#[from] game_sources::Error),
 }
+
+type Result<T> = result::Result<T, Error>;
 
 pub struct PycharmCommand;
 
-fn pycharm() -> Result<(), PycharmCommandError> {
+fn pycharm() -> Result<()> {
     let config = Configs::load()?;
     let python_root_modules = config.game_sources.list_python_root_modules()?;
 
@@ -38,10 +43,12 @@ impl RunnableCommand for PycharmCommand {
             .about("Help to configure your local PyCharm IDE")
     }
 
-    fn run(_: &ArgMatches) -> Result<(), CommandError> {
+    fn run(_: &ArgMatches) -> result::Result<(), command::Error> {
         match pycharm() {
             | Ok(()) => Ok(()),
-            | Err(e) => Err(CommandError::CommandExecutionError(e.to_string())),
+            | Err(e) => {
+                Err(command::Error::CommandExecutionError(e.to_string()))
+            },
         }
     }
 }

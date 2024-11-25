@@ -1,20 +1,19 @@
 mod python;
 
-use crate::builder::python::{PythonBuilder, PythonBuilderError};
-use crate::utils::convert_to_absolute_path::{
-    convert_to_absolute_path, ConvertAbsolutePathError,
-};
+use crate::builder::python::PythonBuilder;
+use crate::utils::convert_to_absolute_path;
+use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
 use std::path::PathBuf;
-use std::{fs, io};
+use std::{fs, io, result};
 use zip::result::ZipError;
 use zip::write::SimpleFileOptions;
 use zip::CompressionMethod;
 use zip_extensions::*;
 
 #[derive(thiserror::Error, Debug)]
-pub enum ModBuilderError {
+pub enum Error {
     #[error("Failed to use the python mod builder\n{0}")]
-    PythonBuilderError(#[from] PythonBuilderError),
+    PythonBuilderError(#[from] python::Error),
 
     #[error("Copy directory failed\n{0}")]
     CopyDirectoryError(#[from] fs_extra::error::Error),
@@ -35,8 +34,10 @@ pub enum ModBuilderError {
     ZipWriteError(#[from] ZipError),
 
     #[error("Unable to get the absolute path of the archive")]
-    ConvertAbsolutePathError(#[from] ConvertAbsolutePathError),
+    ConvertAbsolutePathError(#[from] convert_to_absolute_path::Error),
 }
+
+type Result<T> = result::Result<T, Error>;
 
 pub struct ModBuilder {
     python_builder: PythonBuilder,
@@ -46,7 +47,7 @@ pub struct ModBuilder {
 }
 
 impl ModBuilder {
-    pub fn new(mod_path: PathBuf) -> Result<Self, ModBuilderError> {
+    pub fn new(mod_path: PathBuf) -> Result<Self> {
         let python_builder = PythonBuilder::new()?;
         let target_path = mod_path.join("target");
         let build_path = target_path.join("build");
@@ -59,13 +60,13 @@ impl ModBuilder {
         })
     }
 
-    fn clean_target_directory(&self) -> Result<(), ModBuilderError> {
+    fn clean_target_directory(&self) -> Result<()> {
         let _ = fs::remove_dir_all(&self.target_path);
 
         Ok(())
     }
 
-    fn build_python_src(&self) -> Result<(), ModBuilderError> {
+    fn build_python_src(&self) -> Result<()> {
         let python_sources = self.mod_path.join("scripts");
         let python_build_destination =
             self.build_path.join("res/scripts/client/gui/mods");
@@ -76,16 +77,15 @@ impl ModBuilder {
         Ok(())
     }
 
-    fn copy_meta_file(&self) -> Result<(), ModBuilderError> {
+    fn copy_meta_file(&self) -> Result<()> {
         let meta_path = self.mod_path.join("meta.xml");
         let build_directory = self.build_path.join("meta.xml");
-        fs::copy(meta_path, build_directory)
-            .map_err(ModBuilderError::WriteFilesError)?;
+        fs::copy(meta_path, build_directory).map_err(Error::WriteFilesError)?;
 
         Ok(())
     }
 
-    fn make_archive(&self) -> Result<PathBuf, ModBuilderError> {
+    fn make_archive(&self) -> Result<PathBuf> {
         let archive_file = self.target_path.join("result.wotmod");
         let compression_options = SimpleFileOptions::default()
             .compression_method(CompressionMethod::Stored);
@@ -99,7 +99,7 @@ impl ModBuilder {
         Ok(archive_file)
     }
 
-    pub fn build(&self) -> Result<(), ModBuilderError> {
+    pub fn build(&self) -> Result<()> {
         self.throw_if_isn_t_mod_folder()?;
 
         self.clean_target_directory()?;
@@ -113,18 +113,14 @@ impl ModBuilder {
         Ok(())
     }
 
-    fn throw_if_isn_t_mod_folder(&self) -> Result<(), ModBuilderError> {
+    fn throw_if_isn_t_mod_folder(&self) -> Result<()> {
         let meta_path = self.mod_path.join("meta.xml");
 
         if meta_path.exists() == false {
-            let absolute_mod_folder_path = self
-                .mod_path
-                .canonicalize()
-                .map_err(|_| ModBuilderError::PathError)?;
+            let absolute_mod_folder_path =
+                self.mod_path.canonicalize().map_err(|_| Error::PathError)?;
 
-            return Err(ModBuilderError::BadModFolderError(
-                absolute_mod_folder_path,
-            ));
+            return Err(Error::BadModFolderError(absolute_mod_folder_path));
         };
 
         Ok(())

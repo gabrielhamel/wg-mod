@@ -1,14 +1,13 @@
-use crate::sdk::npm::{NPMError, NPM};
-use crate::sdk::nvm::{BoxedNVM, NVMError};
-use crate::sdk::{InstallResult, Installable};
+use crate::sdk::npm::NPM;
+use crate::sdk::nvm::BoxedNVM;
+use crate::sdk::{npm, nvm, InstallResult, Installable};
 use crate::utils::command::{self, command};
-use std::fs::read_dir;
-use std::path::{Path, PathBuf};
-use std::process;
+use std::path::PathBuf;
 use std::string::FromUtf8Error;
+use std::{process, result};
 
 #[derive(thiserror::Error, Debug)]
-pub enum ASConfigcError {
+pub enum Error {
     #[error("Execution error")]
     ExecutionError(#[from] command::Error),
 
@@ -16,10 +15,10 @@ pub enum ASConfigcError {
     BadExitStatus(process::Output),
 
     #[error("NVM error")]
-    NVMError(#[from] NVMError),
+    NVMError(#[from] nvm::Error),
 
     #[error("NPM error")]
-    NPMError(#[from] NPMError),
+    NPMError(#[from] npm::Error),
 
     #[error("Install error")]
     InstallError(String),
@@ -27,6 +26,8 @@ pub enum ASConfigcError {
     #[error("Unable to decode output of the command")]
     DecodeOutputError(#[from] FromUtf8Error),
 }
+
+type Result<T> = result::Result<T, Error>;
 
 pub struct ASConfigc {
     npm: NPM,
@@ -59,7 +60,7 @@ impl From<NPM> for ASConfigc {
 }
 
 impl ASConfigc {
-    fn exec(&self, args: Vec<&str>) -> Result<process::Output, ASConfigcError> {
+    fn exec(&self, args: Vec<&str>) -> Result<process::Output> {
         let bin_dir = self.npm.get_bin_directory()?;
         let mut args_override = args.clone();
         let exec_path: PathBuf;
@@ -73,16 +74,16 @@ impl ASConfigc {
 
         let executable = exec_path.as_os_str();
         let output = command(executable, args_override, vec![])
-            .map_err(ASConfigcError::ExecutionError)?;
+            .map_err(Error::ExecutionError)?;
 
         if !output.status.success() {
-            return Err(ASConfigcError::BadExitStatus(output));
+            return Err(Error::BadExitStatus(output));
         }
 
         Ok(output)
     }
 
-    pub fn version(&self) -> Result<String, ASConfigcError> {
+    pub fn version(&self) -> Result<String> {
         let out = self.exec(vec!["--version"])?;
         let version = String::from_utf8(out.stdout)?.trim().to_string();
 
@@ -90,39 +91,16 @@ impl ASConfigc {
     }
 }
 
-pub fn load_asconfigc(nvm: BoxedNVM) -> Result<ASConfigc, ASConfigcError> {
+pub fn load_asconfigc(nvm: BoxedNVM) -> Result<ASConfigc> {
     let node = nvm.get_node()?;
     let npm = node.get_npm();
     let asconfigc = ASConfigc::from(npm);
 
     if !asconfigc.is_installed() {
-        asconfigc
-            .install()
-            .map_err(|e| ASConfigcError::InstallError(e))?;
+        asconfigc.install().map_err(|e| Error::InstallError(e))?;
     }
 
     Ok(asconfigc)
-}
-
-fn recurse_files(path: impl AsRef<Path>) -> std::io::Result<Vec<PathBuf>> {
-    let mut buf = vec![];
-    let entries = read_dir(path)?;
-
-    for entry in entries {
-        let entry = entry?;
-        let meta = entry.metadata()?;
-
-        if meta.is_dir() {
-            let mut subdir = recurse_files(entry.path())?;
-            buf.append(&mut subdir);
-        }
-
-        if meta.is_file() {
-            buf.push(entry.path());
-        }
-    }
-
-    Ok(buf)
 }
 
 #[cfg(test)]

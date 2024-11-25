@@ -1,16 +1,18 @@
 use std::fs::File;
-use std::io;
+use std::{io, result};
 
 #[derive(thiserror::Error, Debug)]
-pub enum DownloadError {
-    #[error("Failed to GET")]
-    FetchError(#[from] reqwest::Error),
+pub enum Error {
+    #[error("An error occurred while downloading the file")]
+    Fetch(#[from] reqwest::Error),
 
-    #[error("Error occurred during file writing")]
-    FileWriteError(#[from] io::Error),
+    #[error("An error occurred while saving the file")]
+    Io(#[from] io::Error),
 }
 
-pub fn download_file(url: &str, path: &str) -> Result<(), DownloadError> {
+type Result<T> = result::Result<T, Error>;
+
+pub fn download_file(url: &str, path: &str) -> Result<()> {
     let mut http_response = reqwest::blocking::get(url)?;
     let mut file = File::create(path)?;
 
