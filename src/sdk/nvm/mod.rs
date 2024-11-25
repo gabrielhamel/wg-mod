@@ -1,24 +1,25 @@
 pub mod linux_or_mac_os;
 pub mod windows;
 
-use crate::sdk::node::{Node, NodeError};
+use crate::sdk::node::Node;
 use crate::sdk::nvm::linux_or_mac_os::LinuxOrMacOsNVM;
 use crate::sdk::nvm::windows::WindowsNVM;
-use crate::sdk::Installable;
-use crate::utils::convert_pathbuf_to_string::PathBufToStringError;
+use crate::sdk::{node, Installable};
+use crate::utils::convert_pathbuf_to_string;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::Output;
+use std::result;
 use std::string::FromUtf8Error;
 
 #[derive(thiserror::Error, Debug)]
-pub enum NVMError {
+pub enum Error {
     #[error("nvm install failed")]
     InstallError(String),
     #[error("Download nvm install binary failed")]
     DownloadError(String),
     #[error("node install failed")]
-    InstallNodeError(#[from] NodeError),
+    InstallNodeError(#[from] node::Error),
     #[error("Failed to create NVM directory ")]
     CreateNVMDirectory,
     #[error("NVM directory already exists  ")]
@@ -30,40 +31,42 @@ pub enum NVMError {
     #[error("Failed to execute nvm current command")]
     ExecCurrentError,
     #[error("Conversion failed")]
-    ConversionError(#[from] PathBufToStringError),
+    ConversionError(#[from] convert_pathbuf_to_string::Error),
     #[error("Failed to convert utf8 to string")]
     Utf8Error(#[from] FromUtf8Error),
 }
 
+type Result<T> = result::Result<T, Error>;
+
 pub trait NVM {
-    fn install_node(&self) -> Result<(), NVMError>;
+    fn install_node(&self) -> Result<()>;
 
-    fn exec(&self, args: Vec<&str>) -> Result<Output, NVMError>;
+    fn exec(&self, args: Vec<&str>) -> Result<Output>;
 
-    fn get_node(&self) -> Result<Box<dyn Node>, NVMError>;
+    fn get_node(&self) -> Result<Box<dyn Node>>;
 
-    fn nvm_use(&self, version: &str) -> Result<Output, NVMError> {
+    fn nvm_use(&self, version: &str) -> Result<Output> {
         self.exec(vec!["use", version])
-            .map_err(|_| NVMError::ExecUseError)
+            .map_err(|_| Error::ExecUseError)
     }
 
-    fn current_node_version(&self) -> Result<String, NVMError>;
+    fn current_node_version(&self) -> Result<String>;
 
-    fn version(&self) -> Result<String, NVMError> {
+    fn version(&self) -> Result<String> {
         let out = self.exec(vec!["--version"])?;
 
         Ok(String::from_utf8(out.stdout)
-            .map_err(|_| NVMError::ExecCurrentError)?
+            .map_err(|_| Error::ExecCurrentError)?
             .trim()
             .to_string())
     }
 }
 
-fn create_nvm_directory(nvm_path: &PathBuf) -> Result<(), NVMError> {
+fn create_nvm_directory(nvm_path: &PathBuf) -> Result<()> {
     if !nvm_path.exists() {
-        create_dir_all(nvm_path).map_err(|_| NVMError::CreateNVMDirectory)?;
+        create_dir_all(nvm_path).map_err(|_| Error::CreateNVMDirectory)?;
     } else {
-        Err(NVMError::DirExists)?
+        Err(Error::DirExists)?
     }
 
     Ok(())
@@ -71,7 +74,7 @@ fn create_nvm_directory(nvm_path: &PathBuf) -> Result<(), NVMError> {
 
 pub type BoxedNVM = Box<dyn NVM>;
 
-pub fn load_nvm(nvm_path: &PathBuf) -> Result<BoxedNVM, NVMError> {
+pub fn load_nvm(nvm_path: &PathBuf) -> Result<BoxedNVM> {
     let nvm_installer: Box<dyn Installable> = if cfg!(target_os = "windows") {
         Box::new(WindowsNVM::from(nvm_path))
     } else {
@@ -82,7 +85,7 @@ pub fn load_nvm(nvm_path: &PathBuf) -> Result<BoxedNVM, NVMError> {
         println!("Install nvm ...");
         nvm_installer
             .install()
-            .map_err(|e| NVMError::InstallError(e))?;
+            .map_err(|e| Error::InstallError(e))?;
     }
 
     let nvm: BoxedNVM = if cfg!(target_os = "windows") {

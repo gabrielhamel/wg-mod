@@ -1,22 +1,23 @@
 use std::path::PathBuf;
+use std::result;
 
 #[derive(thiserror::Error, Debug)]
-pub enum ConvertAbsolutePathError {
+pub enum Error {
     #[error("Cannot get absolute path of {0}")]
     ConvertAbsolutePathError(PathBuf),
 }
 
-pub fn convert_to_absolute_path(
-    path: &PathBuf,
-) -> Result<String, ConvertAbsolutePathError> {
+type Result<T> = result::Result<T, Error>;
+
+pub fn convert_to_absolute_path(path: &PathBuf) -> Result<String> {
     let absolute_path = path.canonicalize().map_err(|e| {
         eprintln!("{:?}", e);
-        ConvertAbsolutePathError::ConvertAbsolutePathError(path.clone())
+        Error::ConvertAbsolutePathError(path.clone())
     })?;
 
-    let str_path = absolute_path.to_str().ok_or(
-        ConvertAbsolutePathError::ConvertAbsolutePathError(path.clone()),
-    )?;
+    let str_path = absolute_path
+        .to_str()
+        .ok_or(Error::ConvertAbsolutePathError(path.clone()))?;
 
     if cfg!(target_os = "windows") {
         let path_without_prefix = str_path.replace("\\\\?\\", "");

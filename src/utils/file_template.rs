@@ -1,14 +1,15 @@
-use crate::utils::convert_to_absolute_path::ConvertAbsolutePathError;
+use crate::utils::convert_to_absolute_path;
 use handlebars::Handlebars;
 use serde::Serialize;
 use std::{
     fs::{self, File},
     io,
     path::PathBuf,
+    result,
 };
 
 #[derive(thiserror::Error, Debug)]
-pub enum TemplateError {
+pub enum Error {
     #[error("Error occurred during file creation")]
     FileCreateError(io::Error, PathBuf),
 
@@ -22,24 +23,26 @@ pub enum TemplateError {
     GitInitError(#[from] git2::Error),
 
     #[error("Unable to display absolute mod path")]
-    ConvertAbsolutePath(#[from] ConvertAbsolutePathError),
+    ConvertAbsolutePath(#[from] convert_to_absolute_path::Error),
 }
+
+type Result<T> = result::Result<T, Error>;
 
 pub fn write_template<T>(
     dir: &PathBuf, filename: &str, template: &str, data: &T,
-) -> Result<(), TemplateError>
+) -> Result<()>
 where
     T: Serialize,
 {
-    fs::create_dir_all(&dir).map_err(TemplateError::DirectoryCreateError)?;
+    fs::create_dir_all(&dir).map_err(Error::DirectoryCreateError)?;
 
     let filepath = dir.join(filename);
     let file = File::create(&filepath)
-        .map_err(|e| TemplateError::FileCreateError(e, filepath))?;
+        .map_err(|e| Error::FileCreateError(e, filepath))?;
 
     Handlebars::new()
         .render_template_to_write(template, data, file)
-        .map_err(TemplateError::TemplateWriteError)
+        .map_err(Error::TemplateWriteError)
 }
 
 #[cfg(test)]

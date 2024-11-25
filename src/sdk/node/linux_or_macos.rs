@@ -1,4 +1,5 @@
-use crate::sdk::node::{Node, NodeError};
+use crate::sdk::node;
+use crate::sdk::node::Node;
 use crate::sdk::npm::NPM;
 use crate::utils::command::command;
 use std::path::PathBuf;
@@ -19,13 +20,13 @@ impl Node for LinuxOrMacNode {
         NPM::from(self.node_path.join("bin").join("npm"))
     }
 
-    fn exec(&self, args: Vec<&str>) -> Result<Output, NodeError> {
+    fn exec(&self, args: Vec<&str>) -> Result<Output, node::Error> {
         let binaries_path = self.node_path.join("bin");
         let node_exec_path = binaries_path.join("node");
 
         let executable = node_exec_path.as_os_str();
 
         command(executable, args, vec![])
-            .map_err(|_| NodeError::FailedExecution)
+            .map_err(|_| node::Error::FailedExecution)
     }
 }

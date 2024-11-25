@@ -1,20 +1,25 @@
-use crate::cli::command::{CommandError, RunnableCommand};
-use crate::config::{Configs, ConfigsError};
-use crate::sdk::game_sources::GameSourcesError;
+use crate::cli::command;
+use crate::cli::command::RunnableCommand;
+use crate::config;
+use crate::config::Configs;
+use crate::sdk::game_sources;
 use clap::{ArgMatches, Command};
+use std::result;
 
 #[derive(thiserror::Error, Debug)]
-pub enum ChannelCommandError {
+pub enum Error {
     #[error("Failed to load modding tools\n{0}")]
-    ConfigsError(#[from] ConfigsError),
+    ConfigsError(#[from] config::Error),
 
     #[error("Failed to use build tools\n{0}")]
-    GameSourceError(#[from] GameSourcesError),
+    GameSourceError(#[from] game_sources::Error),
 }
+
+type Result<T> = result::Result<T, Error>;
 
 pub struct ChannelCommand;
 
-fn channel() -> Result<(), ChannelCommandError> {
+fn channel() -> Result<()> {
     let config = Configs::load()?;
     let channel = config.game_sources.get_channel()?;
 
@@ -22,7 +27,7 @@ fn channel() -> Result<(), ChannelCommandError> {
     Ok(())
 }
 
-fn switch_channel() -> Result<(), ChannelCommandError> {
+fn switch_channel() -> Result<()> {
     let config = Configs::load()?;
     config.game_sources.prompt_channel()?;
 
@@ -42,19 +47,21 @@ impl RunnableCommand for ChannelCommand {
             )
     }
 
-    fn run(args: &ArgMatches) -> Result<(), CommandError> {
+    fn run(args: &ArgMatches) -> result::Result<(), command::Error> {
         if let Some(_) = args.subcommand_matches("switch") {
             return match switch_channel() {
                 | Ok(()) => Ok(()),
                 | Err(e) => {
-                    Err(CommandError::CommandExecutionError(e.to_string()))
+                    Err(command::Error::CommandExecutionError(e.to_string()))
                 },
             };
         }
 
         match channel() {
             | Ok(()) => Ok(()),
-            | Err(e) => Err(CommandError::CommandExecutionError(e.to_string())),
+            | Err(e) => {
+                Err(command::Error::CommandExecutionError(e.to_string()))
+            },
         }
     }
 }

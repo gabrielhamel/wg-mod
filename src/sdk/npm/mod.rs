@@ -3,9 +3,10 @@ use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::Env;
 use std::path::PathBuf;
 use std::process::Output;
+use std::result;
 
 #[derive(thiserror::Error, Debug)]
-pub enum NPMError {
+pub enum Error {
     #[error("Execution failed")]
     FailedExecution,
 
@@ -15,6 +16,8 @@ pub enum NPMError {
     #[error("Unable to install package")]
     InstallPackageFailed(String),
 }
+
+type Result<T> = result::Result<T, Error>;
 
 pub struct NPM {
     npm_bin: PathBuf,
@@ -27,7 +30,7 @@ impl From<PathBuf> for NPM {
 }
 
 impl NPM {
-    fn exec(&self, args: Vec<&str>) -> Result<Output, NPMError> {
+    fn exec(&self, args: Vec<&str>) -> Result<Output> {
         let executable = self.npm_bin.as_os_str();
 
         let env = vec![
@@ -36,34 +39,34 @@ impl NPM {
                 value: self
                     .get_bin_directory()?
                     .to_string()
-                    .map_err(|_| NPMError::GetBinDirectoryError)?,
+                    .map_err(|_| Error::GetBinDirectoryError)?,
             }),
         ];
 
-        command(executable, args, env).map_err(|_| NPMError::FailedExecution)
+        command(executable, args, env).map_err(|_| Error::FailedExecution)
     }
 
-    pub fn is_package_installed(&self, name: &str) -> Result<bool, NPMError> {
+    pub fn is_package_installed(&self, name: &str) -> Result<bool> {
         let result = self
             .exec(vec!["list", "-g", name])
-            .map_err(|e| NPMError::InstallPackageFailed(e.to_string()))?;
+            .map_err(|e| Error::InstallPackageFailed(e.to_string()))?;
 
         Ok(result.status.success())
     }
 
-    pub fn get_bin_directory(&self) -> Result<PathBuf, NPMError> {
+    pub fn get_bin_directory(&self) -> Result<PathBuf> {
         self.npm_bin
             .parent()
-            .ok_or(NPMError::GetBinDirectoryError)
+            .ok_or(Error::GetBinDirectoryError)
             .and_then(|res| Ok(PathBuf::from(res)))
     }
 
-    pub fn install_package(&self, name: &str) -> Result<(), NPMError> {
+    pub fn install_package(&self, name: &str) -> Result<()> {
         println!("Installing {}...", name);
 
         let result = self
             .exec(vec!["install", "-g", name])
-            .map_err(|e| NPMError::InstallPackageFailed(e.to_string()))?;
+            .map_err(|e| Error::InstallPackageFailed(e.to_string()))?;
 
         if result.status.success() {
             return Ok(());
@@ -72,17 +75,17 @@ impl NPM {
         let stdout = String::from_utf8_lossy(&result.stdout);
         let stderr = String::from_utf8_lossy(&result.stderr);
 
-        Err(NPMError::InstallPackageFailed(format!(
+        Err(Error::InstallPackageFailed(format!(
             "{}\n{}",
             stdout, stderr
         )))
     }
 
-    pub fn version(&self) -> Result<String, NPMError> {
+    pub fn version(&self) -> Result<String> {
         let out = self.exec(vec!["--version"])?;
 
         Ok(String::from_utf8(out.stdout)
-            .map_err(|_| NPMError::FailedExecution)?
+            .map_err(|_| Error::FailedExecution)?
             .trim()
             .to_string())
     }

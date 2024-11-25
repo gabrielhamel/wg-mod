@@ -1,13 +1,15 @@
 use super::NewArgs;
 use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
-use crate::utils::file_template::{write_template, TemplateError};
+use crate::utils::file_template;
+use crate::utils::file_template::write_template;
 use convert_case::{Case, Casing};
 use serde_json::json;
 use std::path::PathBuf;
+use std::result;
 
-fn template_meta(
-    args: &NewArgs, parent_dir: &PathBuf,
-) -> Result<(), TemplateError> {
+type Result<T> = result::Result<T, file_template::Error>;
+
+fn template_meta(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
     write_template(
         &parent_dir,
         "meta.xml",
@@ -31,7 +33,7 @@ fn template_meta(
 
 fn template_script_entrypoint(
     args: &NewArgs, parent_dir: &PathBuf,
-) -> Result<(), TemplateError> {
+) -> Result<()> {
     write_template(
         &parent_dir,
         &format!("mod_{}.py", args.name.to_case(Case::Snake)),
@@ -49,7 +51,7 @@ def fini():
     Ok(())
 }
 
-fn template_git_ignore(parent_dir: &PathBuf) -> Result<(), TemplateError> {
+fn template_git_ignore(parent_dir: &PathBuf) -> Result<()> {
     write_template(
         &parent_dir,
         ".gitignore",
@@ -64,9 +66,7 @@ fn template_git_ignore(parent_dir: &PathBuf) -> Result<(), TemplateError> {
     Ok(())
 }
 
-fn template_ui_entrypoint(
-    args: &NewArgs, parent_dir: &PathBuf,
-) -> Result<(), TemplateError> {
+fn template_ui_entrypoint(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
     let tokens = args.package_name.split(".").collect::<Vec<_>>();
     let package_name_without_suffix = tokens[..tokens.len() - 1].join(".");
 
@@ -89,9 +89,7 @@ fn template_ui_entrypoint(
 }
 
 // TODO -> Main class is not always "fr.gabouchet...", make it dynamic by package_name
-fn template_ui_config(
-    args: &NewArgs, parent_dir: &PathBuf,
-) -> Result<(), TemplateError> {
+fn template_ui_config(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
     write_template(
         parent_dir,
         "asconfig.json",
@@ -111,7 +109,7 @@ fn template_ui_config(
     )
 }
 
-fn init_git_repository(directory: &PathBuf) -> Result<(), TemplateError> {
+fn init_git_repository(directory: &PathBuf) -> Result<()> {
     template_git_ignore(directory)?;
 
     git2::Repository::init(directory)?;
@@ -119,7 +117,7 @@ fn init_git_repository(directory: &PathBuf) -> Result<(), TemplateError> {
     Ok(())
 }
 
-pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
+pub fn create_mod_files(args: NewArgs) -> Result<()> {
     let kebab_name =
         args.name.from_case(Case::Alternating).to_case(Case::Kebab);
 
@@ -147,7 +145,7 @@ pub fn create_mod_files(args: NewArgs) -> Result<(), TemplateError> {
     Ok(())
 }
 
-pub fn template_nvm_config(parent_dir: &PathBuf) -> Result<(), TemplateError> {
+pub fn template_nvm_config(parent_dir: &PathBuf) -> Result<()> {
     write_template(
         parent_dir,
         "settings.txt",
@@ -161,9 +159,7 @@ proxy: none\n",
     )
 }
 
-pub fn create_nvm_executable(
-    parent_dir: &PathBuf, name: &str,
-) -> Result<(), TemplateError> {
+pub fn create_nvm_executable(parent_dir: &PathBuf, name: &str) -> Result<()> {
     write_template(
         parent_dir,
         name,

@@ -5,7 +5,7 @@ use crate::cli::commands::pycharm::PycharmCommand;
 use clap::{ArgMatches, Command};
 
 #[derive(thiserror::Error, Debug)]
-pub enum CommandError {
+pub enum Error {
     #[error("This command isn't implemented")]
     CommandNotImplemented,
 
@@ -19,7 +19,7 @@ pub enum CommandError {
 pub trait RunnableCommand {
     fn command() -> Command;
 
-    fn run(args: &ArgMatches) -> Result<(), CommandError>;
+    fn run(args: &ArgMatches) -> Result<(), Error>;
 }
 
 pub fn command() -> Command {

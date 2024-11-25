@@ -3,10 +3,11 @@ pub mod windows;
 
 use crate::sdk::npm::NPM;
 use std::process::Output;
+use std::result;
 use std::string::FromUtf8Error;
 
 #[derive(thiserror::Error, Debug)]
-pub enum NodeError {
+pub enum Error {
     #[error("Unable to decode output of the command")]
     DecodeOutputError(#[from] FromUtf8Error),
 
@@ -14,12 +15,14 @@ pub enum NodeError {
     FailedExecution,
 }
 
+type Result<T> = result::Result<T, Error>;
+
 pub trait Node {
     fn get_npm(&self) -> NPM;
 
-    fn exec(&self, args: Vec<&str>) -> Result<Output, NodeError>;
+    fn exec(&self, args: Vec<&str>) -> Result<Output>;
 
-    fn version(&self) -> Result<String, NodeError> {
+    fn version(&self) -> Result<String> {
         let out = self.exec(vec!["--version"])?;
 
         Ok(String::from_utf8(out.stdout)?.trim().to_string())

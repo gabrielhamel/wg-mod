@@ -1,7 +1,7 @@
 use crate::utils::Env;
 use std::ffi::OsStr;
-use std::io;
 use std::process::{Command, Output};
+use std::{io, result};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -9,9 +9,11 @@ pub enum Error {
     ExecutionError(#[from] io::Error),
 }
 
+type Result<T> = result::Result<T, Error>;
+
 pub fn command<S: AsRef<OsStr>>(
     command: S, args: Vec<&str>, env: Vec<Env>,
-) -> Result<Output, Error> {
+) -> Result<Output> {
     let mut command = Command::new(command);
     command.args(args);
 
