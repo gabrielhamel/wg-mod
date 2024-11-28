@@ -1,3 +1,4 @@
+pub mod mod_conf;
 mod settings;
 
 use crate::config::settings::Settings;
