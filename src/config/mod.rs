@@ -1,15 +1,17 @@
-mod settings;
+pub mod settings;
 
 use crate::config::settings::Settings;
 use crate::sdk::as3::AS3;
 use crate::sdk::asconfigc::ASConfigc;
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::sdk::conda::Conda;
+use crate::sdk::game_client::GameClient;
 use crate::sdk::game_sources::GameSources;
 use crate::sdk::nvm::BoxedNVM;
-use crate::sdk::{as3, asconfigc, conda, game_sources, nvm};
-use std::fs::File;
-use std::io::Write;
+use crate::sdk::{as3, asconfigc, conda, game_sources, nvm, Installable};
+use crate::utils::convert_pathbuf_to_string::Stringify;
+use crate::{cli, utils};
+use inquire::InquireError;
 use std::path::PathBuf;
 use std::result;
 
@@ -18,8 +20,14 @@ pub enum Error {
     #[error("Unable to find the user home directory")]
     UserHomeError,
 
+    #[error("Terminal prompt error: {0}")]
+    PromptError(#[from] InquireError),
+
     #[error("Unable to load game sources\n{0}")]
     GameSourcesError(#[from] game_sources::Error),
+
+    #[error("Unable to load game client\n")]
+    GameClientError,
 
     #[error("Unable to load Conda\n{0}")]
     CondaError(#[from] conda::Error),
@@ -27,17 +35,20 @@ pub enum Error {
     #[error("Unable to load AS3\n{0}")]
     AS3Error(#[from] as3::Error),
 
-    #[error("Unable to load settings\n{0}")]
-    SettingsError(String),
-
-    #[error("Invalid json\n{0}")]
-    SettingsParseError(#[from] serde_json::Error),
+    #[error("Unable to load settings: {0}")]
+    SettingsError(#[from] settings::Error),
 
     #[error("NVM error")]
     NVMError(#[from] nvm::Error),
 
     #[error("ASConfigc loading error")]
     ASConfigcError(#[from] asconfigc::Error),
+
+    #[error("Failed to compose string: {0}")]
+    StringError(#[from] std::fmt::Error),
+
+    #[error("Failed convertion: {0}")]
+    ConvertionError(#[from] utils::convert_pathbuf_to_string::Error),
 }
 
 type Result<T> = result::Result<T, Error>;
@@ -45,6 +56,7 @@ type Result<T> = result::Result<T, Error>;
 pub struct Configs {
     pub wg_mod_home: PathBuf,
     pub game_sources: GameSources,
+    pub game_client: GameClient,
     pub conda_environment: CondaEnvironment,
     pub as3: AS3,
     pub asconfigc: ASConfigc,
@@ -65,26 +77,19 @@ impl Configs {
         let as3 = load_as3(&wg_mod_home)?;
         let settings = load_settings(&wg_mod_home)?;
         let asconfigc = load_asconfigc(&wg_mod_home)?;
+        let game_client = load_game_client(&settings);
+
+        println!("{:?}", settings);
 
         Ok(Configs {
             game_sources,
+            game_client,
             wg_mod_home,
             conda_environment,
             as3,
             asconfigc,
             settings,
         })
-    }
-
-    pub fn save_settings(&self) -> Result<()> {
-        let settings_file = self.wg_mod_home.join("settings.json");
-        let file = File::create(settings_file).map_err(|e| {
-            Error::SettingsError(format!("Unable to open settings file: {e}"))
-        })?;
-
-        serde_json::to_writer_pretty(file, &self.settings)?;
-
-        Ok(())
     }
 }
 
@@ -133,31 +138,69 @@ fn load_conda_environment(wg_mod_home: &PathBuf) -> Result<CondaEnvironment> {
 
     Ok(conda.get_environment("wg-mod"))
 }
+fn load_game_client(settings: &Settings) -> GameClient {
+    let game_client_path = settings.game_client_path.clone();
+    GameClient::from(game_client_path)
+}
 
-fn create_default_settings_file(path: &PathBuf) -> Result<()> {
-    let mut file = File::create(path).map_err(|e| {
-        Error::SettingsError(format!("Unable to create settings file: {e}"))
-    })?;
+fn load_settings(wg_mod_home: &PathBuf) -> Result<Settings> {
+    let settings_file_path = wg_mod_home.join("settings.json");
 
-    file.write("{}".as_ref()).map_err(|e| {
-        Error::SettingsError(format!("Unable to write in settings file: {e}"))
-    })?;
+    if !settings_file_path.exists() {
+        let settings =
+            Settings::create_default_settings(settings_file_path.clone());
+        set_default_settings_value(settings.clone())?;
+    }
+
+    Ok(Settings::from_json_file(&settings_file_path)?)
+}
+
+pub fn prompt_game_client_path() -> std::result::Result<String, Error> {
+    let default_game_client_path = if cfg!(target_os = "windows") {
+        PathBuf::from("C:\\Games\\World_of_Tanks_EU")
+    } else {
+        PathBuf::from(
+            "/Users/$USER/Documents/Wargaming.net Games/World_of_Tanks_EU",
+        )
+    };
+    let default_game_client_str = default_game_client_path.to_string()?;
+
+    let value = inquire::Text::new("Wot client path:")
+        .with_default(default_game_client_str.as_str())
+        .prompt()
+        .map_err(Error::PromptError)?;
+
+    Ok(value)
+}
+
+pub fn set_default_settings_value(mut settings_fields: Settings) -> Result<()> {
+    let game_client_string = prompt_game_client_path()?;
+    let game_client_path = PathBuf::from(game_client_string);
+
+    if !game_client_path.exists() {
+        println!();
+        println!("--- Pay attention ---");
+        println!("Game client path doesn't exist : {:?}", game_client_path);
+        println!("You will not be able to build");
+        println!("to set it, rerun wg-mod command");
+        println!("---------------------");
+        println!();
+    }
+
+    settings_fields.game_client_path = game_client_path;
+    settings_fields.write_to_json_file()?;
 
     Ok(())
 }
 
-fn load_settings(wg_mod_home: &PathBuf) -> Result<Settings> {
-    let settings_file = wg_mod_home.join("settings.json");
+fn get_conda(wg_mod_home: &PathBuf) -> Result<Conda> {
+    let conda_path = wg_mod_home.join("conda");
+    let conda = Conda::from(&conda_path);
 
-    if !settings_file.exists() {
-        create_default_settings_file(&settings_file)?
-    };
+    if !conda.is_installed() {
+        println!("Installing conda...");
+        conda.install().expect("failed conda installation");
+    }
 
-    let file = File::open(&settings_file).map_err(|e| {
-        Error::SettingsError(format!("Unable to open settings file: {e}"))
-    })?;
-
-    let settings: Settings = serde_json::from_reader(file)?;
-
-    Ok(settings)
+    Ok(conda)
 }
