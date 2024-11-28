@@ -1,3 +1,4 @@
+pub mod asconfig_json;
 pub mod mod_conf;
 mod settings;
 
@@ -9,6 +10,7 @@ use crate::sdk::conda::Conda;
 use crate::sdk::game_sources::GameSources;
 use crate::sdk::nvm::BoxedNVM;
 use crate::sdk::{as3, asconfigc, conda, game_sources, nvm};
+use asconfig_json::AsconfigcJson;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
