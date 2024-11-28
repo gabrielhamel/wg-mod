@@ -3,6 +3,7 @@ mod python;
 
 use crate::builder::flash::{FlashBuilder, FlashBuilderError};
 use crate::builder::python::PythonBuilder;
+use crate::config::mod_conf::ModConf;
 use crate::utils::convert_to_absolute_path;
 use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
 use std::path::PathBuf;
@@ -40,6 +41,9 @@ pub enum Error {
 
     #[error("Unable to get the absolute path of the archive")]
     ConvertAbsolutePathError(#[from] convert_to_absolute_path::Error),
+
+    #[error("Manage config file")]
+    ConfigFileError(#[from] io::Error),
 }
 
 type Result<T> = result::Result<T, Error>;
@@ -96,9 +100,10 @@ impl ModBuilder {
     }
 
     fn copy_meta_file(&self) -> Result<()> {
-        let meta_path = self.mod_path.join("meta.xml");
+        let meta_path = self.mod_path.join("mod.json");
+        let mod_conf = ModConf::from_file(&meta_path)?;
         let build_directory = self.build_path.join("meta.xml");
-        fs::copy(meta_path, build_directory).map_err(Error::WriteFilesError)?;
+        mod_conf.write_xml_to_file(&build_directory)?;
 
         Ok(())
     }
@@ -135,7 +140,7 @@ impl ModBuilder {
     }
 
     fn throw_if_isn_t_mod_folder(&self) -> Result<()> {
-        let meta_path = self.mod_path.join("meta.xml");
+        let meta_path = self.mod_path.join("mod.json");
 
         if meta_path.exists() == false {
             let absolute_mod_folder_path =
