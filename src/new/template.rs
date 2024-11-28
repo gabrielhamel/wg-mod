@@ -1,32 +1,32 @@
 use super::NewArgs;
+use crate::config::asconfig_json::{AsconfigcJson, CompilerOption};
+use crate::config::mod_conf::ModConf;
 use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
 use crate::utils::file_template;
 use crate::utils::file_template::write_template;
 use convert_case::{Case, Casing};
 use serde_json::json;
+use std::error::Error;
 use std::path::PathBuf;
-use std::result;
+use std::{fs, result};
 
 type Result<T> = result::Result<T, file_template::Error>;
 
 fn template_meta(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
-    write_template(
-        &parent_dir,
-        "meta.xml",
-        "<root>
-    <id>{{package_name}}</id>
-    <version>{{version}}</version>
-    <name>{{name}}</name>
-    <description>{{description}}</description>
-</root>
-",
-        &json!({
-            "package_name": args.package_name,
-            "version": args.version,
-            "name": args.name,
-            "description": args.description
-        }),
-    )?;
+    fs::create_dir_all(&parent_dir)
+        .map_err(file_template::Error::DirectoryCreateError)?;
+
+    let meta = ModConf {
+        package_name: args.package_name.clone(),
+        version: args.version.clone(),
+        name: args.name.clone(),
+        description: args.description.clone(),
+    };
+    let file_path = &parent_dir.join("mod.json");
+
+    meta.write_json_to_file(file_path).map_err(|e| {
+        file_template::Error::FileCreateError(e, file_path.clone())
+    })?;
 
     Ok(())
 }
@@ -89,26 +89,22 @@ fn template_ui_entrypoint(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
 }
 
 fn template_ui_config(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
-    write_template(
-        parent_dir,
-        "asconfig.json",
-        "{
-  \"config\": \"flex\",
-  \"type\": \"lib\",
-  \"compilerOptions\": {
-    \"output\": \".\",
-    \"targets\": [
-      \"SWF\"
-    ],
-    \"source-map\": true
-  },
-  \"mainClass\": \"{{main_class_name}}\"
-}
-",
-        &json!({
-            "main_class_name": args.name.to_case(Case::Pascal),
-        }),
-    )
+    fs::create_dir_all(parent_dir)
+        .map_err(file_template::Error::DirectoryCreateError)?;
+    let ui_config = AsconfigcJson {
+        config: "flex".to_string(),
+        compilerOption: CompilerOption {
+            output: "".to_string(),
+            source_path: vec![],
+        },
+        mainClass: "".to_string(),
+    };
+
+    let filename = parent_dir.join("asconfigc.json");
+
+    Ok(ui_config
+        .write_json_to_file(&filename)
+        .map_err(|e| file_template::Error::FileCreateError(e, filename))?)
 }
 
 fn init_git_repository(directory: &PathBuf) -> Result<()> {
@@ -124,6 +120,7 @@ pub fn create_mod_files(args: NewArgs) -> Result<()> {
         args.name.from_case(Case::Alternating).to_case(Case::Kebab);
 
     let root_path = args.directory.join(&kebab_name);
+
     template_meta(&args, &root_path)?;
 
     let scripts_entrypoint_path = &root_path.join("scripts");

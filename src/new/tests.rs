@@ -24,16 +24,15 @@ mod tests {
 
         assert_eq!(mod_path.exists(), true);
 
-        let meta_content = read_to_string(mod_path.join("meta.xml")).unwrap();
+        let meta_content = read_to_string(mod_path.join("mod.json")).unwrap();
         assert_eq!(
             meta_content,
-            "<root>
-    <id>fr.gabouchet.better-matchmaking</id>
-    <version>1.0.2</version>
-    <name>Better matchmaking</name>
-    <description>Best mod ever</description>
-</root>
-"
+            "{
+  \"id\": \"fr.gabouchet.better-matchmaking\",
+  \"version\": \"1.0.2\",
+  \"name\": \"Better matchmaking\",
+  \"description\": \"Best mod ever\"
+}"
         );
 
         let script_entrypoint_content =
@@ -66,22 +65,17 @@ def fini():
         );
 
         let ui_config_content =
-            read_to_string(mod_path.join("ui/asconfig.json")).unwrap();
+            read_to_string(mod_path.join("ui/asconfigc.json")).unwrap();
         assert_eq!(
             ui_config_content,
             "{
   \"config\": \"flex\",
-  \"type\": \"lib\",
   \"compilerOptions\": {
-    \"output\": \".\",
-    \"targets\": [
-      \"SWF\"
-    ],
-    \"source-map\": true
+    \"output\": \"\",
+    \"source-path\": []
   },
-  \"mainClass\": \"BetterMatchmaking\"
-}
-"
+  \"mainClass\": \"\"
+}"
         );
 
         template_nvm_config(&mod_path).unwrap();
