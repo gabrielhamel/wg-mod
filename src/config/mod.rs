@@ -10,9 +10,9 @@ use crate::sdk::game_client::GameClient;
 use crate::sdk::game_sources::GameSources;
 use crate::sdk::nvm::BoxedNVM;
 use crate::sdk::{as3, asconfigc, conda, game_sources, nvm, Installable};
-use crate::utils::convert_pathbuf_to_string::Stringify;
-use crate::{cli, utils};
+use crate::utils;
 use inquire::InquireError;
+use std::env::VarError;
 use std::path::PathBuf;
 use std::result;
 
@@ -50,6 +50,9 @@ pub enum Error {
 
     #[error("Failed convertion: {0}")]
     ConvertionError(#[from] utils::convert_pathbuf_to_string::Error),
+
+    #[error("Unable to read current user name")]
+    Environment(#[from] VarError),
 }
 
 type Result<T> = result::Result<T, Error>;
@@ -57,7 +60,7 @@ type Result<T> = result::Result<T, Error>;
 pub struct Configs {
     pub wg_mod_home: PathBuf,
     pub game_sources: GameSources,
-    pub game_client: GameClient,
+    pub game_client: Option<GameClient>,
     pub conda_environment: CondaEnvironment,
     pub as3: AS3,
     pub asconfigc: ASConfigc,
@@ -79,8 +82,6 @@ impl Configs {
         let settings = load_settings(&wg_mod_home)?;
         let asconfigc = load_asconfigc(&wg_mod_home)?;
         let game_client = load_game_client(&settings);
-
-        println!("{:?}", settings);
 
         Ok(Configs {
             game_sources,
@@ -139,59 +140,30 @@ fn load_conda_environment(wg_mod_home: &PathBuf) -> Result<CondaEnvironment> {
 
     Ok(conda.get_environment("wg-mod"))
 }
-fn load_game_client(settings: &Settings) -> GameClient {
-    let game_client_path = settings.game_client_path.clone();
-    GameClient::from(game_client_path)
+
+fn load_game_client(settings: &Settings) -> Option<GameClient> {
+    if let Some(game_client_path) = &settings.game_client_path {
+        Some(GameClient::from(game_client_path))
+    } else {
+        None
+    }
 }
 
 fn load_settings(wg_mod_home: &PathBuf) -> Result<Settings> {
     let settings_file_path = wg_mod_home.join("settings.json");
+    let mut settings: Settings;
 
     if !settings_file_path.exists() {
-        let settings =
+        settings =
             Settings::create_default_settings(settings_file_path.clone());
-        set_default_settings_value(settings.clone())?;
-    }
-
-    Ok(Settings::from_json_file(&settings_file_path)?)
-}
-
-pub fn prompt_game_client_path() -> std::result::Result<String, Error> {
-    let default_game_client_path = if cfg!(target_os = "windows") {
-        PathBuf::from("C:\\Games\\World_of_Tanks_EU")
     } else {
-        PathBuf::from(
-            "/Users/$USER/Documents/Wargaming.net Games/World_of_Tanks_EU",
-        )
-    };
-    let default_game_client_str = default_game_client_path.to_string()?;
-
-    let value = inquire::Text::new("Wot client path:")
-        .with_default(default_game_client_str.as_str())
-        .prompt()
-        .map_err(Error::PromptError)?;
-
-    Ok(value)
-}
-
-pub fn set_default_settings_value(mut settings_fields: Settings) -> Result<()> {
-    let game_client_string = prompt_game_client_path()?;
-    let game_client_path = PathBuf::from(game_client_string);
-
-    if !game_client_path.exists() {
-        println!();
-        println!("--- Pay attention ---");
-        println!("Game client path doesn't exist : {:?}", game_client_path);
-        println!("You will not be able to build");
-        println!("to set it, rerun wg-mod command");
-        println!("---------------------");
-        println!();
+        settings = Settings::from_json_file(&settings_file_path)?;
     }
 
-    settings_fields.game_client_path = game_client_path;
-    settings_fields.write_to_json_file()?;
+    settings.verify_game_client_path_validity();
+    settings.write_to_json_file()?;
 
-    Ok(())
+    Ok(settings)
 }
 
 fn get_conda(wg_mod_home: &PathBuf) -> Result<Conda> {
