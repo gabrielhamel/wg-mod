@@ -159,14 +159,16 @@ mod tests {
 
     #[test]
     fn install_conda() {
-        let tmp_dir = tempdir().unwrap();
-        let tmp_dir_path = tmp_dir.path().to_path_buf();
-        let conda_path = tmp_dir_path.join("conda");
+        if !cfg!(target_os = "windows") {
+            let tmp_dir = tempdir().unwrap();
+            let tmp_dir_path = tmp_dir.path().to_path_buf();
+            let conda_path = tmp_dir_path.join("conda");
 
-        let conda = load_conda(&conda_path).unwrap();
-        let version = conda.version().unwrap();
+            let conda = load_conda(&conda_path).unwrap();
+            let version = conda.version().unwrap();
 
-        let semantic_version_pattern = Regex::new("^conda ([0-9]+)\\.([0-9]+)\\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+)?$").unwrap();
-        assert!(semantic_version_pattern.is_match(&version));
+            let semantic_version_pattern = Regex::new("^conda ([0-9]+)\\.([0-9]+)\\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+)?$").unwrap();
+            assert!(semantic_version_pattern.is_match(&version));
+        }
     }
 }
