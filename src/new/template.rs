@@ -5,13 +5,12 @@ use crate::utils::file_template;
 use crate::utils::file_template::write_template;
 use convert_case::{Case, Casing};
 use serde_json::json;
-use std::error::Error;
 use std::path::PathBuf;
 use std::{fs, result};
 
 type Result<T> = result::Result<T, file_template::Error>;
 
-fn template_meta(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
+fn template_mod_conf(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
     fs::create_dir_all(&parent_dir)
         .map_err(file_template::Error::DirectoryCreateError)?;
 
@@ -124,7 +123,7 @@ pub fn create_mod_files(args: NewArgs) -> Result<()> {
 
     let root_path = args.directory.join(&kebab_name);
 
-    template_meta(&args, &root_path)?;
+    template_mod_conf(&args, &root_path)?;
 
     let scripts_entrypoint_path = &root_path.join("scripts");
     template_script_entrypoint(&args, &scripts_entrypoint_path)?;
