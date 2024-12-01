@@ -1,7 +1,15 @@
+use crate::utils::file_template;
+use crate::utils::file_template::write_template;
 use serde_derive::{Deserialize, Serialize};
-use std::fmt::Error;
+use serde_json::json;
 use std::io;
 use std::path::PathBuf;
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Unable to create this template file")]
+    FileTemplateError(#[from] file_template::Error),
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModConf {
@@ -25,12 +33,27 @@ impl ModConf {
         Ok(())
     }
 
-    pub fn write_xml_to_file(
-        &self, file_path: &PathBuf,
-    ) -> Result<(), io::Error> {
-        let file = std::fs::File::create(file_path)?;
+    pub fn export_mod_meta(
+        &self, filepath: &PathBuf, filename: &str,
+    ) -> Result<(), Error> {
+        write_template(
+            &filepath,
+            filename,
+            "<root>
+  <id>{{package_name}}</id>
+  <version>{{version}}</version>
+  <name>{{name}}</name>
+  <description>{{description}}</description>
+</root>
+ ",
+            &json!({
+                "package_name": self.package_name,
+                "version": self.version,
+                "name": self.name,
+                "description": self.description
+            }),
+        )?;
 
-        let _ = serde_xml_rs::to_writer(file, self);
         Ok(())
     }
 

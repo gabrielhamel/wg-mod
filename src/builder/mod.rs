@@ -1,6 +1,7 @@
 mod python;
 
 use crate::builder::python::PythonBuilder;
+use crate::config::mod_conf;
 use crate::config::mod_conf::ModConf;
 use crate::utils::convert_to_absolute_path;
 use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
@@ -39,6 +40,9 @@ pub enum Error {
 
     #[error("Manage config file")]
     ConfigFileError(#[from] io::Error),
+
+    #[error("Unable to write mod config")]
+    ModConfigFileError(#[from] mod_conf::Error),
 }
 
 type Result<T> = result::Result<T, Error>;
@@ -84,8 +88,7 @@ impl ModBuilder {
     fn copy_meta_file(&self) -> Result<()> {
         let meta_path = self.mod_path.join("mod.json");
         let mod_conf = ModConf::from_file(&meta_path)?;
-        let build_directory = self.build_path.join("meta.xml");
-        mod_conf.write_xml_to_file(&build_directory)?;
+        mod_conf.export_mod_meta(&self.build_path, "meta.xml")?;
 
         Ok(())
     }
