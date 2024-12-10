@@ -1,4 +1,5 @@
 use super::NewArgs;
+use crate::config::asconfig_json::{AsconfigcJson, CompilerOption};
 use crate::config::mod_conf::ModConf;
 use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
 use crate::utils::file_template;
@@ -87,26 +88,22 @@ fn template_ui_entrypoint(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
 }
 
 fn template_ui_config(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
-    write_template(
-        parent_dir,
-        "asconfig.json",
-        "{
-  \"config\": \"flex\",
-  \"type\": \"lib\",
-  \"compilerOptions\": {
-    \"output\": \".\",
-    \"targets\": [
-      \"SWF\"
-    ],
-    \"source-map\": true
-  },
-  \"mainClass\": \"{{main_class_name}}\"
-}
-",
-        &json!({
-            "main_class_name": args.name.to_case(Case::Pascal),
-        }),
-    )
+    fs::create_dir_all(parent_dir)
+        .map_err(file_template::Error::DirectoryCreateError)?;
+    let ui_config = AsconfigcJson {
+        config: "flex".to_string(),
+        compiler_option: CompilerOption {
+            output: "".to_string(),
+            source_path: vec![],
+        },
+        main_class: "".to_string(),
+    };
+
+    let filename = parent_dir.join("asconfigc.json");
+
+    Ok(ui_config
+        .write_json_to_file(&filename)
+        .map_err(|e| file_template::Error::FileCreateError(e, filename))?)
 }
 
 fn init_git_repository(directory: &PathBuf) -> Result<()> {

@@ -1,3 +1,4 @@
+pub mod asconfig_json;
 pub mod mod_conf;
 pub mod settings;
 
