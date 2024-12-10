@@ -65,22 +65,17 @@ def fini():
         );
 
         let ui_config_content =
-            read_to_string(mod_path.join("ui/asconfig.json")).unwrap();
+            read_to_string(mod_path.join("ui/asconfigc.json")).unwrap();
         assert_eq!(
             ui_config_content,
             "{
   \"config\": \"flex\",
-  \"type\": \"lib\",
   \"compilerOptions\": {
-    \"output\": \".\",
-    \"targets\": [
-      \"SWF\"
-    ],
-    \"source-map\": true
+    \"output\": \"\",
+    \"source-path\": []
   },
-  \"mainClass\": \"BetterMatchmaking\"
-}
-"
+  \"mainClass\": \"\"
+}"
         );
 
         template_nvm_config(&mod_path).unwrap();
