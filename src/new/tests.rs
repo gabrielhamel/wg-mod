@@ -65,18 +65,17 @@ def fini():
         );
 
         let ui_config_content =
-            read_to_string(mod_path.join("ui/asconfig.json")).unwrap();
+            read_to_string(mod_path.join("ui/asconfigc.json")).unwrap();
         assert_eq!(
             ui_config_content,
             "{
   \"config\": \"flex\",
   \"compilerOptions\": {
-    \"output\": \"../target/build/ui/better_matchmaking.swf\",
-    \"source-path\": [\"src\"]
+    \"output\": \"\",
+    \"source-path\": []
   },
-  \"mainClass\": \"fr.gabouchet.BetterMatchmaking\"
-}
-"
+  \"mainClass\": \"\"
+}"
         );
 
         template_nvm_config(&mod_path).unwrap();
