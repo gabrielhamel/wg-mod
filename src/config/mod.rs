@@ -2,6 +2,8 @@ pub mod asconfig_json;
 pub mod mod_conf;
 pub mod settings;
 
+use crate::builder::flash_lib;
+use crate::builder::flash_lib::build_flash_client_lib;
 use crate::config::settings::Settings;
 use crate::sdk::as3::AS3;
 use crate::sdk::asconfigc::ASConfigc;
@@ -25,16 +27,19 @@ pub enum Error {
     #[error("Terminal prompt error: {0}")]
     PromptError(#[from] InquireError),
 
-    #[error("Unable to load game sources\n{0}")]
+    #[error("Unable to load game sources: {0}")]
     GameSourcesError(#[from] game_sources::Error),
 
-    #[error("Unable to load game client\n")]
+    #[error("Unable to load game client")]
     GameClientError,
 
-    #[error("Unable to load Conda\n{0}")]
+    #[error("Unable to build client flash lib: {0}")]
+    GameClientLibError(#[from] flash_lib::Error),
+
+    #[error("Unable to load Conda: {0}")]
     CondaError(#[from] conda::Error),
 
-    #[error("Unable to load AS3\n{0}")]
+    #[error("Unable to load AS3: {0}")]
     AS3Error(#[from] as3::Error),
 
     #[error("Unable to load settings: {0}")]
@@ -68,7 +73,7 @@ pub struct Configs {
     pub settings: Settings,
 }
 
-fn get_tool_home() -> Result<PathBuf> {
+pub fn get_tool_home() -> Result<PathBuf> {
     let user_path: PathBuf = home::home_dir().ok_or(Error::UserHomeError)?;
     let wg_tool_path = user_path.join(".wg-mod");
     Ok(wg_tool_path)
@@ -83,6 +88,7 @@ impl Configs {
         let settings = load_settings(&wg_mod_home)?;
         let asconfigc = load_asconfigc(&wg_mod_home)?;
         let game_client = load_game_client(&settings);
+        build_flash_client_lib(&wg_mod_home)?;
 
         Ok(Configs {
             game_sources,

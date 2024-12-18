@@ -1,5 +1,6 @@
 mod flash;
 mod python;
+pub mod flash_lib;
 
 use crate::builder::flash::{FlashBuilder, FlashBuilderError};
 use crate::builder::python::PythonBuilder;

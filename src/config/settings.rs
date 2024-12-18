@@ -1,4 +1,6 @@
 use crate::config;
+use crate::config::get_tool_home;
+use crate::config::settings::Error::LoadError;
 use crate::utils::convert_pathbuf_to_string::Stringify;
 use serde_derive::{Deserialize, Serialize};
 use std::env;
@@ -12,6 +14,8 @@ pub enum Error {
     FileError(#[from] std::io::Error),
     #[error("Failed to read json : {0}")]
     ParsingError(String),
+    #[error("Failed to load settings : {0}")]
+    LoadError(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -104,4 +108,12 @@ impl Settings {
         settings.settings_file_path = filename.clone();
         Ok(settings)
     }
+}
+
+pub fn load_settings() -> Result<Settings, Error> {
+    let wg_mod_home = get_tool_home().map_err(|e| LoadError(e.to_string()))?;
+    let settings = Settings::from_json_file(&wg_mod_home.join("settings.json"))
+        .map_err(|e| LoadError(e.to_string()))?;
+
+    Ok(settings)
 }
