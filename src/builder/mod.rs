@@ -1,5 +1,5 @@
+pub mod flash_lib;
 mod python;
-
 use crate::builder::python::PythonBuilder;
 use crate::config::mod_conf;
 use crate::config::mod_conf::ModConf;
