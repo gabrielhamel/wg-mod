@@ -88,7 +88,6 @@ impl Configs {
         let settings = load_settings(&wg_mod_home)?;
         let asconfigc = load_asconfigc(&wg_mod_home)?;
         let game_client = load_game_client(&settings);
-        build_flash_client_lib(&wg_mod_home)?;
 
         Ok(Configs {
             game_sources,

@@ -1,4 +1,4 @@
-use crate::utils::convert_to_absolute_path;
+use crate::utils::{convert_pathbuf_to_string, convert_to_absolute_path};
 use handlebars::Handlebars;
 use serde::Serialize;
 use std::{
@@ -7,6 +7,7 @@ use std::{
     path::PathBuf,
     result,
 };
+use crate::config;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -24,6 +25,12 @@ pub enum Error {
 
     #[error("Unable to display absolute mod path")]
     ConvertAbsolutePath(#[from] convert_to_absolute_path::Error),
+
+    #[error("Unable to convert path to string")]
+    ConvertPathToString(#[from] convert_pathbuf_to_string::Error),
+
+    #[error("Failed to get wg home directory")]
+    WgHomePath(#[from] config::Error),
 }
 
 type Result<T> = result::Result<T, Error>;

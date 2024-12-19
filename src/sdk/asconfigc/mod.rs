@@ -5,13 +5,15 @@ use crate::utils::command::{self, command};
 use std::path::PathBuf;
 use std::string::FromUtf8Error;
 use std::{process, result};
+use crate::config;
+use crate::config::Configs;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Execution error")]
     ExecutionError(#[from] command::Error),
 
-    #[error("Bad exit status")]
+    #[error("Bad asconfigc exit status")]
     BadExitStatus(process::Output),
 
     #[error("NVM error")]
@@ -25,6 +27,12 @@ pub enum Error {
 
     #[error("Unable to decode output of the command")]
     DecodeOutputError(#[from] FromUtf8Error),
+
+    #[error("Failed to build flash")]
+    BuildError(String),
+
+    #[error("Failed to convert")]
+    ConvertionError(String),
 }
 
 type Result<T> = result::Result<T, Error>;
@@ -81,6 +89,27 @@ impl ASConfigc {
         }
 
         Ok(output)
+    }
+
+    pub fn build(
+        &self, input_path: &PathBuf,
+    ) -> Result<()> {
+
+        let config =
+            Configs::load().map_err(|e| Error::BuildError(e.to_string()))?;
+        let as3_sdk_path = config.as3.get_as3_path();
+        let as3_sdk_path_string = as3_sdk_path
+            .to_str()
+            .ok_or(Error::ConvertionError("as3_sdk_path to string".to_string()))?;
+
+        let input_path_string =
+            input_path.to_str().ok_or(Error::ConvertionError("input_path to string".to_string()))?;
+
+        let _ = self.exec(
+            vec!["--sdk", as3_sdk_path_string, "-p", input_path_string],
+        )?;
+
+        Ok(())
     }
 
     pub fn version(&self) -> Result<String> {
