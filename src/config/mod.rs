@@ -2,8 +2,8 @@ pub mod asconfig_json;
 pub mod mod_conf;
 pub mod settings;
 
-use crate::builder::flash_lib;
-use crate::builder::flash_lib::build_flash_client_lib;
+use crate::sdk::flash_lib;
+use crate::sdk::flash_lib::extract_flash_client_lib;
 use crate::config::settings::Settings;
 use crate::sdk::as3::AS3;
 use crate::sdk::asconfigc::ASConfigc;
@@ -88,7 +88,6 @@ impl Configs {
         let settings = load_settings(&wg_mod_home)?;
         let asconfigc = load_asconfigc(&wg_mod_home)?;
         let game_client = load_game_client(&settings);
-        build_flash_client_lib(&wg_mod_home)?;
 
         Ok(Configs {
             game_sources,

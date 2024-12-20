@@ -1,4 +1,4 @@
-use crate::builder::flash_lib::GameFlashLib;
+use crate::sdk::flash_lib::GameFlashLib;
 use crate::utils::copy_directory::copy_directory;
 use std::fs::File;
 use std::io::{BufWriter, Write};
