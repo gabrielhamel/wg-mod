@@ -8,6 +8,8 @@ use convert_case::{Case, Casing};
 use serde_json::json;
 use std::path::PathBuf;
 use std::{fs, result};
+use crate::config::get_tool_home;
+use crate::utils::convert_pathbuf_to_string::Stringify;
 
 type Result<T> = result::Result<T, file_template::Error>;
 
@@ -90,16 +92,42 @@ fn template_ui_entrypoint(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
 fn template_ui_config(args: &NewArgs, parent_dir: &PathBuf) -> Result<()> {
     fs::create_dir_all(parent_dir)
         .map_err(file_template::Error::DirectoryCreateError)?;
+
+    let wg_home = get_tool_home()?;
+    let lib_home = wg_home.join("flash_lib");
+    let mut lib = vec![];
+    // todo -> change this to libhome listfile when the flash lib extract will be done before "new" command
+    let lib_content = vec![
+        "base_app-1.0-SNAPSHOT.swc",
+        "battle.swc",
+        "common-1.0-SNAPSHOT.swc",
+        "common_i18n_library-1.0-SNAPSHOT.swc",
+        "gui_base-1.0-SNAPSHOT.swc",
+        "gui_battle-1.0-SNAPSHOT.swc",
+        "gui_lobby-1.0-SNAPSHOT.swc",
+        "lobby.swc",
+    ];
+    for string in lib_content {
+        lib.push(lib_home.join(string).to_string()?);
+    }
+
+    let tokens = args.package_name.split(".").collect::<Vec<_>>();
+    let mut package_name_without_suffix = &tokens[..tokens.len() - 1] ;
+    let mut main_class_name = package_name_without_suffix.join(".");
+    main_class_name.push_str(".");
+    main_class_name.push_str(args.name.clone().to_case(Case::Pascal).as_str());
+
     let ui_config = AsconfigcJson {
         config: "flex".to_string(),
         compiler_option: CompilerOption {
             output: "".to_string(),
-            source_path: vec![],
+            source_path: vec!["src".to_string()],
+            library_path: lib,
         },
-        main_class: "".to_string(),
+        main_class: main_class_name,
     };
 
-    let filename = parent_dir.join("asconfigc.json");
+    let filename = parent_dir.join("asconfig.json");
 
     Ok(ui_config
         .write_json_to_file(&filename)

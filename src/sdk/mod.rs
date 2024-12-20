@@ -6,6 +6,7 @@ pub mod game_sources;
 pub mod node;
 pub mod npm;
 pub mod nvm;
+pub mod flash_lib;
 
 type InstallResult = Result<(), String>;
 

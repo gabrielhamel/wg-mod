@@ -19,6 +19,8 @@ pub struct CompilerOption {
     pub output: String,
     #[serde(rename = "source-path")]
     pub source_path: Vec<String>,
+    #[serde(rename = "external-library-path")]
+    pub library_path: Vec<String>,
 }
 
 impl AsconfigcJson {

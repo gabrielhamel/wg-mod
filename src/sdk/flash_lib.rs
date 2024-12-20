@@ -50,7 +50,7 @@ impl GameFlashLib {
         self.game_flash_lib.exists()
     }
 
-    fn build(&self) -> Result<(), Error> {
+    fn extract(&self) -> Result<(), Error> {
         println!("Building game flash lib...");
         let tmp_dir =
             tempdir().map_err(|e| Error::BuildError(e.to_string()))?;
@@ -87,7 +87,7 @@ impl GameFlashLib {
     }
 }
 
-pub fn build_flash_client_lib(
+pub fn extract_flash_client_lib(
     wg_mod_home: &PathBuf,
 ) -> Result<GameFlashLib, Error> {
     let game_flash_lib_path = wg_mod_home.join("flash_lib");
@@ -102,7 +102,7 @@ pub fn build_flash_client_lib(
         .map_err(|e| Error::BuildError(e.to_string()))?;
 
     game_flash_lib
-        .build()
+        .extract()
         .map_err(|e| Error::BuildError(e.to_string()))?;
 
     Ok(game_flash_lib)

@@ -25,6 +25,12 @@ impl From<&PathBuf> for AS3 {
     }
 }
 
+impl AS3 {
+    pub fn get_as3_path(&self) -> PathBuf {
+        self.as3_path.clone()
+    }
+}
+
 impl Installable for AS3 {
     fn is_installed(&self) -> bool {
         match fs::metadata(&self.as3_path) {

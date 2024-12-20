@@ -6,6 +6,7 @@ pub mod downloader;
 pub mod extract_archive;
 pub mod file_template;
 pub mod pattern_validator;
+pub mod tmp_dir;
 
 #[derive(Clone, Debug)]
 pub struct Env {

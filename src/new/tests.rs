@@ -65,16 +65,28 @@ def fini():
         );
 
         let ui_config_content =
-            read_to_string(mod_path.join("ui/asconfigc.json")).unwrap();
+            read_to_string(mod_path.join("ui/asconfig.json")).unwrap();
         assert_eq!(
             ui_config_content,
             "{
   \"config\": \"flex\",
   \"compilerOptions\": {
     \"output\": \"\",
-    \"source-path\": []
+    \"source-path\": [
+      \"src\"
+    ],
+    \"external-library-path\": [
+      \"C:\\\\Users\\\\cedran\\\\.wg-mod\\\\flash_lib\\\\base_app-1.0-SNAPSHOT.swc\",
+      \"C:\\\\Users\\\\cedran\\\\.wg-mod\\\\flash_lib\\\\battle.swc\",
+      \"C:\\\\Users\\\\cedran\\\\.wg-mod\\\\flash_lib\\\\common-1.0-SNAPSHOT.swc\",
+      \"C:\\\\Users\\\\cedran\\\\.wg-mod\\\\flash_lib\\\\common_i18n_library-1.0-SNAPSHOT.swc\",
+      \"C:\\\\Users\\\\cedran\\\\.wg-mod\\\\flash_lib\\\\gui_base-1.0-SNAPSHOT.swc\",
+      \"C:\\\\Users\\\\cedran\\\\.wg-mod\\\\flash_lib\\\\gui_battle-1.0-SNAPSHOT.swc\",
+      \"C:\\\\Users\\\\cedran\\\\.wg-mod\\\\flash_lib\\\\gui_lobby-1.0-SNAPSHOT.swc\",
+      \"C:\\\\Users\\\\cedran\\\\.wg-mod\\\\flash_lib\\\\lobby.swc\"
+    ]
   },
-  \"mainClass\": \"\"
+  \"mainClass\": \"fr.gabouchet.BetterMatchmaking\"
 }"
         );
 
