@@ -1,4 +1,3 @@
-use crate::config::mod_conf::ModConf;
 use serde_derive::{Deserialize, Serialize};
 use std::io;
 use std::path::PathBuf;
@@ -19,6 +18,8 @@ pub struct CompilerOption {
     pub output: String,
     #[serde(rename = "source-path")]
     pub source_path: Vec<String>,
+    #[serde(rename = "external-library-path")]
+    pub library_path: Vec<String>,
 }
 
 impl AsconfigcJson {

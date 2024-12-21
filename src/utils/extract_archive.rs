@@ -1,9 +1,6 @@
-use crate::builder::flash_lib::GameFlashLib;
-use crate::utils::copy_directory::copy_directory;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
-use tempfile::tempdir;
 use zip::result::ZipError;
 use zip::write::{ExtendedFileOptions, FileOptions};
 use zip::{CompressionMethod, ZipArchive, ZipWriter};
@@ -31,6 +28,7 @@ pub fn extract_archive(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::tempdir;
     #[test]
 
     fn extract_archive_test() {
