@@ -2,8 +2,6 @@ pub mod asconfig_json;
 pub mod mod_conf;
 pub mod settings;
 
-use crate::builder::flash_lib;
-use crate::builder::flash_lib::build_flash_client_lib;
 use crate::config::settings::Settings;
 use crate::sdk::as3::AS3;
 use crate::sdk::asconfigc::ASConfigc;
@@ -12,7 +10,9 @@ use crate::sdk::conda::Conda;
 use crate::sdk::game_client::GameClient;
 use crate::sdk::game_sources::GameSources;
 use crate::sdk::nvm::BoxedNVM;
-use crate::sdk::{as3, asconfigc, conda, game_sources, nvm, Installable};
+use crate::sdk::{
+    as3, asconfigc, conda, flash_lib, game_sources, nvm, Installable,
+};
 use crate::utils;
 use inquire::InquireError;
 use std::env::VarError;
@@ -29,9 +29,6 @@ pub enum Error {
 
     #[error("Unable to load game sources: {0}")]
     GameSourcesError(#[from] game_sources::Error),
-
-    #[error("Unable to load game client")]
-    GameClientError,
 
     #[error("Unable to build client flash lib: {0}")]
     GameClientLibError(#[from] flash_lib::Error),
@@ -88,7 +85,6 @@ impl Configs {
         let settings = load_settings(&wg_mod_home)?;
         let asconfigc = load_asconfigc(&wg_mod_home)?;
         let game_client = load_game_client(&settings);
-        build_flash_client_lib(&wg_mod_home)?;
 
         Ok(Configs {
             game_sources,

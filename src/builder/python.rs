@@ -4,6 +4,7 @@ use crate::sdk::conda;
 use crate::sdk::conda::environment::CondaEnvironment;
 use crate::utils::copy_directory;
 use crate::utils::copy_directory::copy_directory;
+use crate::utils::tmp_dir::TempDirError;
 use glob::glob;
 use std::fs::{create_dir_all, remove_file};
 use std::path::PathBuf;
@@ -38,6 +39,9 @@ pub enum Error {
 
     #[error("Can't copy or create files\n{0}")]
     WriteFilesError(io::Error),
+
+    #[error("Tempory directory usage failed")]
+    TempDirError(#[from] TempDirError),
 }
 
 type Result<T> = result::Result<T, Error>;
