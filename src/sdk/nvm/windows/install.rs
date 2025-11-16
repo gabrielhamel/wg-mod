@@ -3,9 +3,9 @@ use crate::sdk::nvm;
 use crate::sdk::nvm::create_nvm_directory;
 use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::downloader::download_file;
+use crate::utils::zip;
 use std::fs;
 use std::path::PathBuf;
-use zip_extensions::zip_extract;
 
 pub fn install_nvm_windows(nvm_path: &PathBuf) -> nvm::Result<()> {
     create_nvm_directory(nvm_path)
@@ -22,7 +22,7 @@ pub fn install_nvm_windows(nvm_path: &PathBuf) -> nvm::Result<()> {
     )
         .map_err(|e| nvm::Error::DownloadError(e.to_string()))?;
 
-    zip_extract(&downloaded_file_path, nvm_path)
+    zip::extract(&downloaded_file_path, nvm_path)
         .map_err(|e| nvm::Error::InstallError(e.to_string()))?;
 
     fs::remove_file(&downloaded_file_path)

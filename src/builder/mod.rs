@@ -11,15 +11,12 @@ use crate::sdk::flash_lib;
 use crate::sdk::flash_lib::extract_flash_client_lib;
 use crate::utils::convert_pathbuf_to_string::Stringify;
 use crate::utils::convert_to_absolute_path::convert_to_absolute_path;
+use crate::utils::zip;
 use crate::utils::{convert_pathbuf_to_string, convert_to_absolute_path};
 use convert_case::{Case, Casing};
 use inquire::InquireError;
 use std::path::PathBuf;
 use std::{fs, io, result};
-use zip::result::ZipError;
-use zip::write::SimpleFileOptions;
-use zip::CompressionMethod;
-use zip_extensions::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -42,7 +39,7 @@ pub enum Error {
     PathError(String),
 
     #[error("Unable to write mod archive\n{0}")]
-    ZipWriteError(#[from] ZipError),
+    ZipWriteError(#[from] zip::Error),
 
     #[error("Unable to get the absolute path of the archive: {0}")]
     ConvertAbsolutePathError(#[from] convert_to_absolute_path::Error),
@@ -201,14 +198,7 @@ impl ModBuilder {
 
     fn make_archive(&self) -> Result<PathBuf> {
         let archive_file = self.target_path.join("result.wotmod");
-        let compression_options = SimpleFileOptions::default()
-            .compression_method(CompressionMethod::Stored);
-
-        zip_create_from_directory_with_options(
-            &archive_file,
-            &self.build_path,
-            |_| compression_options,
-        )?;
+        zip::archive_directory(&archive_file, &self.build_path)?;
 
         Ok(archive_file)
     }
