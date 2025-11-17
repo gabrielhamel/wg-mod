@@ -1,6 +1,7 @@
 pub mod as3;
 pub mod asconfigc;
 pub mod conda;
+pub mod conda2;
 pub mod flash_lib;
 pub mod game_client;
 pub mod game_sources;
