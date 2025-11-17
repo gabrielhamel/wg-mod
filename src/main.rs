@@ -3,6 +3,8 @@ use crate::config::Configs;
 mod builder;
 mod cli;
 mod config;
+mod dependency;
+mod executable;
 mod new;
 mod sdk;
 mod utils;
