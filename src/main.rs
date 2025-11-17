@@ -13,8 +13,8 @@ mod utils;
 
 fn main() {
     let mut store = DependencyStore::default();
-    store.register("conda", Box::new(CondaV2::new("test")));
-    let conda = store.get("conda")?;
+    store.register("conda", Box::new(CondaV2::default()));
+    let conda = store.get("conda").unwrap();
 
     Configs::load().expect("Unable to load wg-mod configs");
 

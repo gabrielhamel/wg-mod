@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 pub mod store;
 
 #[derive(thiserror::Error, Debug)]
@@ -13,11 +15,11 @@ pub enum Error {
 }
 
 pub trait Dependency {
-    fn version(&self) -> Result<String, Error>;
+    fn version(&self, path: &PathBuf) -> Result<String, Error>;
 
-    fn is_installed(&self) -> bool;
+    fn is_installed(&self, path: &PathBuf) -> bool;
 
     fn depends_on(&self) -> Vec<&'static str>;
 
-    fn install(&self) -> Result<(), Error>;
+    fn install(&self, path: &PathBuf) -> Result<(), Error>;
 }
