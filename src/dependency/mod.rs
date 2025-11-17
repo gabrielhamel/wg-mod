@@ -1,3 +1,5 @@
+pub mod store;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Installation failed: {0}")]
@@ -11,9 +13,7 @@ pub enum Error {
 }
 
 pub trait Dependency {
-    const NAME: &'static str;
-
-    fn get_version(&self) -> Result<String, Error>;
+    fn version(&self) -> Result<String, Error>;
 
     fn is_installed(&self) -> bool;
 

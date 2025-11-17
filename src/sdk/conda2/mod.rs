@@ -3,13 +3,30 @@ mod install;
 use crate::dependency::{Dependency, Error};
 use install::install_conda;
 use std::fs;
+use std::path::PathBuf;
 
-pub struct CondaV2 {}
+pub struct CondaV2 {
+    conda_path: PathBuf,
+}
+
+impl CondaV2 {
+    pub fn new(conda_path: &str) -> Self {
+        Self {
+            conda_path: PathBuf::from(conda_path),
+        }
+    }
+
+    fn get_executable_path(&self) -> PathBuf {
+        if cfg!(target_os = "windows") {
+            self.conda_path.join("condabin").join("conda.bat")
+        } else {
+            self.conda_path.join("bin").join("conda")
+        }
+    }
+}
 
 impl Dependency for CondaV2 {
-    const NAME: &'static str = "conda";
-
-    fn get_version(&self) -> Result<String, Error> {
+    fn version(&self) -> Result<String, Error> {
         todo!()
     }
 
@@ -25,7 +42,7 @@ impl Dependency for CondaV2 {
     }
 
     fn install(&self) -> Result<(), Error> {
-        install_conda(&self.install_destination)
+        install_conda(&self.conda_path)
             .map_err(|error| Error::InstallationFailed(error.to_string()))
     }
 }

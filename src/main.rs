@@ -1,4 +1,6 @@
 use crate::config::Configs;
+use crate::dependency::store::DependencyStore;
+use crate::sdk::conda2::CondaV2;
 
 mod builder;
 mod cli;
@@ -10,6 +12,10 @@ mod sdk;
 mod utils;
 
 fn main() {
+    let mut store = DependencyStore::default();
+    store.register("conda", Box::new(CondaV2::new("test")));
+    let conda = store.get("conda")?;
+
     Configs::load().expect("Unable to load wg-mod configs");
 
     match cli::run() {
