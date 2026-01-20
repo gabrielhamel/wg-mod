@@ -18,6 +18,7 @@ pub fn install_conda(destination: &PathBuf) -> Result<()> {
         format!("https://repo.anaconda.com/miniconda/{install_script_name}");
 
     // FIXME get the hash and check if there is already one downloaded in local
+    // FIXME Cloudflare sometimes blocks the download, need to handle that case
     download_file(&url, install_script_destination.as_str())?;
 
     let install_destination =
@@ -48,7 +49,7 @@ pub fn install_conda(destination: &PathBuf) -> Result<()> {
     fs::remove_file(install_script_destination)
         .map_err(conda::Error::InstallError)?;
 
-    // FIXME accept TOS
+    // Accept the conda terms of service
     // conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
     // conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
